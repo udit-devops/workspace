@@ -1,0 +1,691 @@
+/* ---------------------------------------------------------
+   GRAPHITE THEME - GLOBAL STYLES
+--------------------------------------------------------- */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ---------------------------------------------------------
+   MAIN CONTAINER
+--------------------------------------------------------- */
+.graphite-auth-container {
+  min-height: 100vh;
+  background: #0a0a0a;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ---------------------------------------------------------
+   ANIMATED BACKGROUND
+--------------------------------------------------------- */
+.graphite-bg {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.graphite-grid {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+  opacity: 0.5;
+}
+
+.graphite-gradient {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.15;
+  animation: float 20s ease-in-out infinite;
+}
+
+.gradient-1 {
+  width: 500px;
+  height: 500px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  top: -10%;
+  left: -10%;
+  animation-delay: 0s;
+}
+
+.gradient-2 {
+  width: 400px;
+  height: 400px;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  bottom: -10%;
+  right: -10%;
+  animation-delay: 5s;
+}
+
+.gradient-3 {
+  width: 350px;
+  height: 350px;
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation-delay: 10s;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(30px, -30px) scale(1.1);
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.9);
+  }
+}
+
+/* ---------------------------------------------------------
+   CONTENT LAYOUT
+--------------------------------------------------------- */
+.graphite-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  min-height: 100vh;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 40px;
+  gap: 80px;
+}
+
+/* ---------------------------------------------------------
+   LEFT SIDE - BRANDING
+--------------------------------------------------------- */
+.graphite-left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 48px;
+  padding-right: 40px;
+}
+
+.graphite-logo-section {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.graphite-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+}
+
+.graphite-brand {
+  font-size: 24px;
+  font-weight: 600;
+  color: #ffffff;
+  letter-spacing: -0.5px;
+}
+
+.graphite-hero-title {
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: #ffffff;
+  letter-spacing: -1px;
+  margin-bottom: 20px;
+}
+
+.graphite-gradient-text {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f5576c 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.graphite-hero-subtitle {
+  font-size: 18px;
+  line-height: 1.6;
+  color: #a1a1aa;
+  max-width: 500px;
+}
+
+.graphite-features {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.graphite-feature-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #d4d4d8;
+  font-size: 15px;
+}
+
+.graphite-feature-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: rgba(102, 126, 234, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #667eea;
+  flex-shrink: 0;
+}
+
+/* ---------------------------------------------------------
+   RIGHT SIDE - FORM
+--------------------------------------------------------- */
+.graphite-right {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 480px;
+}
+
+.graphite-form-card {
+  width: 100%;
+  background: rgba(24, 24, 27, 0.6);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.graphite-form-header {
+  margin-bottom: 24px;
+}
+
+.graphite-form-header h3 {
+  font-size: 24px;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 6px;
+  letter-spacing: -0.5px;
+}
+
+.graphite-form-header p {
+  font-size: 14px;
+  color: #a1a1aa;
+}
+
+/* ---------------------------------------------------------
+   ERROR ALERT
+--------------------------------------------------------- */
+.graphite-error {
+  padding: 10px 14px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
+  color: #fca5a5;
+  font-size: 13px;
+  margin-bottom: 16px;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---------------------------------------------------------
+   GOOGLE BUTTON
+--------------------------------------------------------- */
+.graphite-google-btn {
+  margin-bottom: 20px;
+}
+
+.graphite-google-btn > div {
+  width: 100% !important;
+}
+
+.graphite-google-btn iframe {
+  width: 100% !important;
+}
+
+/* ---------------------------------------------------------
+   DIVIDER
+--------------------------------------------------------- */
+.graphite-divider {
+  position: relative;
+  text-align: center;
+  margin: 18px 0;
+}
+
+.graphite-divider::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.graphite-divider span {
+  position: relative;
+  padding: 0 16px;
+  background: rgba(24, 24, 27, 0.9);
+  color: #71717a;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ---------------------------------------------------------
+   FORM INPUTS
+--------------------------------------------------------- */
+.graphite-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.graphite-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.graphite-input-group label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #d4d4d8;
+  letter-spacing: -0.2px;
+}
+
+.graphite-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.graphite-input-wrapper svg {
+  position: absolute;
+  left: 14px;
+  color: #71717a;
+  pointer-events: none;
+}
+
+.graphite-input-wrapper input {
+  width: 100%;
+  padding: 11px 14px 11px 44px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.graphite-input-wrapper input::placeholder {
+  color: #52525b;
+}
+
+.graphite-input-wrapper input:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.graphite-input-wrapper input:focus {
+  border-color: #667eea;
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.graphite-input-hint {
+  font-size: 12px;
+  color: #71717a;
+  margin-top: 2px;
+}
+
+.graphite-password-toggle {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  color: #71717a;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  transition: color 0.2s ease;
+}
+
+.graphite-password-toggle:hover {
+  color: #d4d4d8;
+}
+
+/* ---------------------------------------------------------
+   FORM FOOTER & LINKS
+--------------------------------------------------------- */
+.graphite-form-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -6px;
+}
+
+.graphite-link {
+  font-size: 13px;
+  color: #667eea;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.graphite-link:hover {
+  color: #8b9aed;
+}
+
+/* ---------------------------------------------------------
+   CAPTCHA
+--------------------------------------------------------- */
+.graphite-captcha {
+  display: flex;
+  justify-content: center;
+  margin: 16px 0;
+}
+
+/* ---------------------------------------------------------
+   SUBMIT BUTTON
+--------------------------------------------------------- */
+.graphite-submit-btn {
+  width: 100%;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.graphite-submit-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+}
+
+.graphite-submit-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.graphite-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.graphite-btn-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.graphite-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ---------------------------------------------------------
+   TERMS & SIGNUP LINK
+--------------------------------------------------------- */
+.graphite-terms {
+  text-align: center;
+  font-size: 12px;
+  color: #71717a;
+  margin-top: 16px;
+  line-height: 1.5;
+}
+
+.graphite-terms a {
+  color: #667eea;
+  text-decoration: none;
+}
+
+.graphite-terms a:hover {
+  text-decoration: underline;
+}
+
+.graphite-signup-link {
+  text-align: center;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 13px;
+  color: #a1a1aa;
+}
+
+.graphite-signup-link a {
+  color: #667eea;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.graphite-signup-link a:hover {
+  color: #8b9aed;
+}
+
+/* ---------------------------------------------------------
+   OTP VERIFICATION PAGE STYLES
+--------------------------------------------------------- */
+.otp-icon-wrapper {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  color: #667eea;
+}
+
+.otp-inputs-container {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin: 28px 0;
+}
+
+.otp-input {
+  width: 52px;
+  height: 56px;
+  text-align: center;
+  font-size: 24px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.03);
+  border: 2px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  color: #ffffff;
+  outline: none;
+  transition: all 0.2s ease;
+  caret-color: #667eea;
+}
+
+.otp-input:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.otp-input:focus {
+  border-color: #667eea;
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+  transform: scale(1.05);
+}
+
+.otp-input:not(:placeholder-shown) {
+  border-color: #667eea;
+  background: rgba(102, 126, 234, 0.08);
+}
+
+.otp-resend-section {
+  margin-top: 24px;
+  text-align: center;
+}
+
+.otp-timer {
+  font-size: 14px;
+  color: #a1a1aa;
+}
+
+.otp-timer span {
+  color: #667eea;
+  font-weight: 600;
+}
+
+.otp-resend-btn {
+  background: none;
+  border: none;
+  color: #667eea;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.otp-resend-btn:hover:not(:disabled) {
+  background: rgba(102, 126, 234, 0.1);
+  color: #8b9aed;
+}
+
+.otp-resend-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.graphite-spinner.small {
+  width: 14px;
+  height: 14px;
+  border-width: 2px;
+}
+
+.graphite-success {
+  padding: 10px 14px;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: 8px;
+  color: #86efac;
+  font-size: 13px;
+  margin-bottom: 16px;
+  animation: slideDown 0.3s ease;
+}
+
+/* ---------------------------------------------------------
+   RESPONSIVE DESIGN
+--------------------------------------------------------- */
+@media (max-width: 1024px) {
+  .graphite-content {
+    flex-direction: column;
+    gap: 60px;
+    padding: 40px 20px;
+  }
+
+  .graphite-left {
+    padding-right: 0;
+    text-align: center;
+    align-items: center;
+  }
+
+  .graphite-hero-title {
+    font-size: 36px;
+  }
+
+  .graphite-hero-subtitle {
+    max-width: 100%;
+  }
+
+  .graphite-right {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .graphite-content {
+    padding: 20px;
+  }
+
+  .graphite-form-card {
+    padding: 28px 24px;
+  }
+
+  .graphite-hero-title {
+    font-size: 32px;
+  }
+
+  .graphite-form-header h3 {
+    font-size: 24px;
+  }
+
+  .graphite-logo {
+    width: 40px;
+    height: 40px;
+  }
+
+  .graphite-brand {
+    font-size: 20px;
+  }
+  
+  .otp-inputs-container {
+    gap: 8px;
+  }
+  
+  .otp-input {
+    width: 44px;
+    height: 50px;
+    font-size: 20px;
+  }
+}
+
+/* ---------------------------------------------------------
+   ACCESSIBILITY
+--------------------------------------------------------- */
+*:focus-visible {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+}
+
+::selection {
+  background: rgba(102, 126, 234, 0.3);
+  color: white;
+}
