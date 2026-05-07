@@ -1,8 +1,9 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY!);
+
 
 export async function sendVerificationEmail(to: string, code: string) {
+  const resend = new Resend(process.env.RESEND_API_KEY!);
   await resend.emails.send({
     from: "DevWorkspace <onboarding@resend.dev>",  // TEMP SAFE OPTION
     to,
