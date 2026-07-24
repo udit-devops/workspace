@@ -5,7 +5,7 @@ import SignupPage from "./pages/SignupPage";
 import Dashboard from "./pages/DashboardPage";
 import type { JSX } from "react";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
-
+import './App.css'
 function PrivateRoute({ children }: { children: JSX.Element }) {
   const { user, loading } = useAuth();
 
@@ -20,18 +20,10 @@ export default function App() {
     <Routes>
       <Route path="/signup" element={<SignupPage />} />
       <Route path="/login" element={<LoginPage />} />
-
-      <Route
-        path="/dashboard"
-        element={
-          <PrivateRoute>
-            <Dashboard />
-          </PrivateRoute>
-        }
-      />
-
+      <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
       <Route path="*" element={<Navigate to="/login" />} />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
+
     </Routes>
   );
 }

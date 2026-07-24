@@ -17,6 +17,7 @@ model User {
   createdAt          DateTime            @default(now())
   isVerified         Boolean             @default(false)
   verificationTokens VerificationToken[]
+  integrations       Integration[] 
 }
 
 model VerificationToken {
@@ -27,4 +28,19 @@ model VerificationToken {
   userId    String?
   createdAt DateTime @default(now())
   user      User?    @relation(fields: [userId], references: [id])
+}
+
+model Integration{
+  id            String   @id @default(uuid())
+  userId        String
+  provider      String   
+  accessToken   String   
+  workspaceId   String?
+  workspaceName String?
+  botId         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  user          User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, provider]) 
 }
