@@ -1,16 +1,13 @@
 import { useState } from "react";
 import { Code2, Github, Bot, Figma } from "lucide-react";
 import TopBar from "./Topbar";
-// import Sidebar, { ToolId } from "./Sidebar";
+
 import BottomAIBar from "./BottomAIBar";
 import type { ToolId } from "./Sidebar";
 import Sidebar from "./Sidebar";
 import PlaceholderPanel from "../Panels/PlaceHolderpanel";
 import NotionPanel from "../Panels/NotionPanel";
 import DashboardHome from "../Dashboard/DashboardHome";
-// import DashboardHome from "../dashboard/DashboardHome";
-// import NotionPanel from "../panels/NotionPanel";
-// import PlaceholderPanel from "../panels/PlaceholderPanel";
 
 interface AppShellProps {
   user?: { name?: string; email?: string } | null;
