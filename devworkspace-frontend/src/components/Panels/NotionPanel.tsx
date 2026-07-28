@@ -1,12 +1,16 @@
-import { BookOpen, ExternalLink, Plus, FileText } from "lucide-react";
+import { BookOpen, ExternalLink, Plus, FileText, LogOut, RefreshCw } from "lucide-react";
 
 interface NotionPanelProps {
   isConnected: boolean;
   onConnect: () => void;
+  onDisconnect: () => void;
+  onRefresh: () => void;
   pages?: { id: string; title: string }[];
 }
 
-export default function NotionPanel({ isConnected, onConnect, pages = [] }: NotionPanelProps) {
+export default function NotionPanel({
+  isConnected, onConnect, onDisconnect, onRefresh, pages = [],
+}: NotionPanelProps) {
   if (!isConnected) {
     return (
       <div style={{
@@ -51,7 +55,6 @@ export default function NotionPanel({ isConnected, onConnect, pages = [] }: Noti
 
   return (
     <div style={{ flex: 1, display: "flex", background: "#1c1c1e", overflow: "hidden" }}>
-      {/* Sidebar */}
       <div style={{
         width: 220, flexShrink: 0,
         borderRight: "0.5px solid #3a3a3c",
@@ -63,13 +66,29 @@ export default function NotionPanel({ isConnected, onConnect, pages = [] }: Noti
           borderBottom: "0.5px solid #3a3a3c",
         }}>
           <span style={{ fontSize: 11, fontWeight: 600, color: "#aeaeb2", textTransform: "uppercase", letterSpacing: "0.1em" }}>Pages</span>
-          <button style={{
-            width: 24, height: 24, borderRadius: 6,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            background: "transparent", border: "none", color: "#636366", cursor: "pointer",
-          }}>
-            <Plus size={13} />
-          </button>
+          <div style={{ display: "flex", gap: 4 }}>
+            <button
+              onClick={onRefresh}
+              title="Refresh"
+              style={{
+                width: 24, height: 24, borderRadius: 6,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                background: "transparent", border: "none", color: "#636366", cursor: "pointer",
+              }}
+            >
+              <RefreshCw size={13} />
+            </button>
+            <button
+              title="Add page"
+              style={{
+                width: 24, height: 24, borderRadius: 6,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                background: "transparent", border: "none", color: "#636366", cursor: "pointer",
+              }}
+            >
+              <Plus size={13} />
+            </button>
+          </div>
         </div>
         <div style={{ flex: 1, overflowY: "auto", padding: "8px 0" }}>
           {pages.length === 0 ? (
@@ -85,9 +104,25 @@ export default function NotionPanel({ isConnected, onConnect, pages = [] }: Noti
             </button>
           ))}
         </div>
+        <div style={{
+          padding: "8px 12px",
+          borderTop: "0.5px solid #3a3a3c",
+        }}>
+          <button
+            onClick={onDisconnect}
+            style={{
+              width: "100%", display: "flex", alignItems: "center", gap: 8,
+              padding: "8px 12px", borderRadius: 8,
+              background: "transparent", border: "none",
+              color: "#ff453a", fontSize: 11, cursor: "pointer",
+            }}
+          >
+            <LogOut size={12} />
+            Disconnect
+          </button>
+        </div>
       </div>
 
-      {/* Main area */}
       <div style={{
         flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
       }}>

@@ -7,7 +7,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 
 import authRoutes from "./routes/authRoutes.js";
-
+import notionRoutes from "./routes/notionRoutes.js";
 
 
 
@@ -29,6 +29,7 @@ app.use(cors({
 
 // MOUNT ROUTES
 app.use("/auth", authRoutes);
+app.use("/auth/notion", notionRoutes);
 
 app.get("/", (_req, res) => {
   res.send("API running");
