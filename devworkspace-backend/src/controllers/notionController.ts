@@ -54,6 +54,68 @@ export const pages = asyncHandler(async (req: Request & { user?: any }, res: Res
   res.json({ pages });
 });
 
+export const pageContent = asyncHandler(async (req: Request & { user?: any }, res: Response) => {
+  const { pageId } = req.params;
+  const integration = await notionService.getIntegration(req.user.id);
+  if (!integration) {
+    return res.status(400).json({ message: "Notion not connected" });
+  }
+
+  const page = await notionService.getPageBlocks(integration.accessToken, pageId as string);
+  res.json({ page });
+});
+
+export const updateBlock = asyncHandler(async (req: Request & { user?: any }, res: Response) => {
+  const { blockId } = req.params;
+  const { text, type } = req.body;
+  const integration = await notionService.getIntegration(req.user.id);
+  if (!integration) {
+    return res.status(400).json({ message: "Notion not connected" });
+  }
+
+  await notionService.updateBlock(integration.accessToken, blockId as string, text, type);
+  res.json({ success: true });
+});
+
+export const addBlocks = asyncHandler(async (req: Request & { user?: any }, res: Response) => {
+  const { pageId } = req.params;
+  const { blocks } = req.body;
+  const integration = await notionService.getIntegration(req.user.id);
+  if (!integration) {
+    return res.status(400).json({ message: "Notion not connected" });
+  }
+
+  const result = await notionService.appendBlocks(integration.accessToken, pageId as string, blocks);
+  const newBlocks = (result.results || []).map((b: any) => ({
+    id: b.id,
+    type: b.type,
+    text: "",
+  }));
+  res.json({ blocks: newBlocks });
+});
+
+export const removeBlock = asyncHandler(async (req: Request & { user?: any }, res: Response) => {
+  const { blockId } = req.params;
+  const integration = await notionService.getIntegration(req.user.id);
+  if (!integration) {
+    return res.status(400).json({ message: "Notion not connected" });
+  }
+
+  await notionService.deleteBlock(integration.accessToken, blockId as string);
+  res.json({ success: true });
+});
+
+export const createPage = asyncHandler(async (req: Request & { user?: any }, res: Response) => {
+  const { parentPageId, title } = req.body;
+  const integration = await notionService.getIntegration(req.user.id);
+  if (!integration) {
+    return res.status(400).json({ message: "Notion not connected" });
+  }
+
+  const page = await notionService.createPage(integration.accessToken, parentPageId, title);
+  res.json({ page });
+});
+
 export const disconnect = asyncHandler(async (req: Request & { user?: any }, res: Response) => {
   await notionService.disconnect(req.user.id);
   res.json({ message: "Disconnected" });

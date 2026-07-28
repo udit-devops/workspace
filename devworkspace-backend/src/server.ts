@@ -31,6 +31,11 @@ app.use(cors({
 app.use("/auth", authRoutes);
 app.use("/auth/notion", notionRoutes);
 
+app.post("/ai/chat", (req, res) => {
+  const { message } = req.body;
+  res.json({ reply: `[AI Mock] Received: "${message}". AI integration coming soon.` });
+});
+
 app.get("/", (_req, res) => {
   res.send("API running");
 });

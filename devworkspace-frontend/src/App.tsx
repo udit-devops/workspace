@@ -21,8 +21,8 @@ export default function App() {
       <Route path="/signup" element={<SignupPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-      <Route path="*" element={<Navigate to="/login" />} />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
+      <Route path="*" element={<Navigate to="/login" />} />
 
     </Routes>
   );

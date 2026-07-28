@@ -18,29 +18,28 @@ export default function AppShell({ user }: AppShellProps) {
   const [activePanel, setActivePanel] = useState<ToolId>("dashboard");
   const [connectedTools, setConnectedTools] = useState<ToolId[]>([]);
   const [notionPages, setNotionPages] = useState<{ id: string; title: string }[]>([]);
+  const [selectedPage, setSelectedPage] = useState<{ id: string; title: string; blocks: { id: string; type: string; text: string }[] } | null>(null);
+  const [pageLoading, setPageLoading] = useState(false);
 
   useEffect(() => {
     notionApi.getStatus().then((data) => {
       if (data.connected) {
         setConnectedTools((prev) => (prev.includes("notion") ? prev : [...prev, "notion"]));
+        return notionApi.getPages();
       }
+    }).then((res) => {
+      if (res) setNotionPages(res.pages);
     }).catch(() => {});
   }, []);
 
   const handleNotionConnect = useCallback(() => {
-    const popup = window.open(
-      "http://localhost:5000/auth/notion/connect",
-      "notion-oauth",
-      "width=600,height=700"
-    );
-    if (!popup) return;
+    window.open("http://localhost:5000/auth/notion/connect", "notion-oauth", "width=600,height=700");
   }, []);
 
   useEffect(() => {
     const handler = (event: MessageEvent) => {
       if (event.origin !== "http://localhost:5000") return;
-      const data = event.data;
-      if (data?.success) {
+      if (event.data?.success) {
         setConnectedTools((prev) => (prev.includes("notion") ? prev : [...prev, "notion"]));
         notionApi.getPages().then((res) => setNotionPages(res.pages)).catch(() => {});
       }
@@ -58,13 +57,32 @@ export default function AppShell({ user }: AppShellProps) {
     }
   }, []);
 
+  const handleSelectPage = useCallback(async (pageId: string) => {
+    setPageLoading(true);
+    try {
+      const data = await notionApi.getPageContent(pageId);
+      setSelectedPage(data.page);
+    } catch {
+      setSelectedPage(null);
+    } finally {
+      setPageLoading(false);
+    }
+  }, []);
+
   const handleNotionDisconnect = useCallback(async () => {
     try {
       await notionApi.disconnect();
       setConnectedTools((prev) => prev.filter((t) => t !== "notion"));
       setNotionPages([]);
+      setSelectedPage(null);
     } catch {}
   }, []);
+
+  useEffect(() => {
+    if (activePanel === "notion" && connectedTools.includes("notion")) {
+      loadPages();
+    }
+  }, [activePanel, connectedTools, loadPages]);
 
   const renderPanel = () => {
     switch (activePanel) {
@@ -78,6 +96,9 @@ export default function AppShell({ user }: AppShellProps) {
             onDisconnect={handleNotionDisconnect}
             pages={notionPages}
             onRefresh={loadPages}
+            selectedPage={selectedPage}
+            onSelectPage={handleSelectPage}
+            pageLoading={pageLoading}
           />
         );
       case "editor":
@@ -106,7 +127,7 @@ export default function AppShell({ user }: AppShellProps) {
       fontFamily: "Inter, -apple-system, sans-serif",
       overflow: "hidden",
     }}>
-      <TopBar user={user} />
+      <TopBar user={user} onOpenTool={setActivePanel} />
       <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
         <Sidebar activePanel={activePanel} onSelect={setActivePanel} connectedTools={connectedTools} />
         <main style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>

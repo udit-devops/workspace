@@ -2,8 +2,6 @@ import {
   LayoutDashboard, Code2, Github, BookOpen,
   Bot, Figma, Terminal, Layers,
 } from "lucide-react";
-import React from "react";
-
 export type ToolId = "dashboard" | "editor" | "github" | "notion" | "ai" | "figma" | "terminal";
 
 interface SidebarProps {

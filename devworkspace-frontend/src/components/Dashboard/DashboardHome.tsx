@@ -152,7 +152,9 @@ export default function DashboardHome({ onOpenTool, connectedTools, user }: Dash
                   <div style={{ fontSize: 13, fontWeight: 600, color: "#f5f5f7", fontFamily: "monospace", marginBottom: 4 }}>{b.name}</div>
                   <div style={{ fontSize: 11, color: "#636366", lineHeight: 1.5 }}>{b.desc}</div>
                 </div>
-                <button style={{
+                <button
+                  onClick={() => alert(`Installing ${b.name}...\n\n${b.desc}\n\nThis will set up a new project with all dependencies pre-configured.`)}
+                  style={{
                   display: "flex", alignItems: "center", gap: 6,
                   padding: "6px 12px", borderRadius: 8,
                   background: `${b.color}18`, color: b.color,

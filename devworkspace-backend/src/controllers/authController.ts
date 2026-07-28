@@ -17,7 +17,6 @@ const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 // 📌 SIGNUP (WITH EMAIL VERIFICATION)
 // ======================================================================
 export const signup = asyncHandler(async (req: Request, res: Response) => {
-  debugger;
   const { email, password, turnstileToken } = req.body;
 
   // Validate captcha
@@ -104,11 +103,42 @@ export const verifyEmail = asyncHandler(async (req:any, res:any) => {
 });
 
 // ======================================================================
+// 📌 RESEND OTP
+// ======================================================================
+export const resendOtp = asyncHandler(async (req: Request, res: Response) => {
+  const { userId } = req.body;
+  if (!userId) {
+    return res.status(400).json({ message: "UserId required" });
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  await prisma.verificationToken.deleteMany({ where: { userId } });
+
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+  await prisma.verificationToken.create({
+    data: {
+      email: user.email,
+      userId: user.id,
+      token: otp,
+      expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+    },
+  });
+
+  await sendVerificationEmail(user.email, otp);
+
+  res.json({ message: "New OTP sent" });
+});
+
+// ======================================================================
 // 📌 LOGIN (WITH EMAIL + PASSWORD)
 // ======================================================================
 export const login = asyncHandler(async (req: Request, res: Response) => {
   const { email, password, turnstileToken } = req.body;
-debugger;
   //await verifyTurnstile(turnstileToken);
 
   const user = await prisma.user.findUnique({ where: { email } });
@@ -151,7 +181,6 @@ debugger;
 // 📌 GOOGLE LOGIN
 // ======================================================================
 export const googleLogin = asyncHandler(async (req: Request, res: Response) => {
-  debugger;
   const { credential } = req.body;
   if (!credential) {
     return res.status(400).json({ message: "Missing Google credential" });
