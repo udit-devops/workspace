@@ -1,16 +1,14 @@
 import { useState } from "react";
-import { Code2, Github, Bot, Figma } from "lucide-react";
+import { Code2, Github } from "lucide-react";
 import TopBar from "./Topbar";
-// import Sidebar, { ToolId } from "./Sidebar";
 import BottomAIBar from "./BottomAIBar";
 import type { ToolId } from "./Sidebar";
 import Sidebar from "./Sidebar";
 import PlaceholderPanel from "../Panels/PlaceHolderpanel";
 import NotionPanel from "../Panels/NotionPanel";
 import DashboardHome from "../Dashboard/DashboardHome";
-// import DashboardHome from "../dashboard/DashboardHome";
-// import NotionPanel from "../panels/NotionPanel";
-// import PlaceholderPanel from "../panels/PlaceholderPanel";
+import FigmaPanel from "../Figma/FigmaPanel";
+import AiAssistantPanel from "../AiAssistant/AiAssistantPanel";
 
 interface AppShellProps {
   user?: { name?: string; email?: string } | null;
@@ -38,9 +36,9 @@ export default function AppShell({ user }: AppShellProps) {
       case "github":
         return <PlaceholderPanel icon={<Github size={24} />} title="GitHub" subtitle="github_webview.connect()" color="#8b949e" />;
       case "figma":
-        return <PlaceholderPanel icon={<Figma size={24} />} title="Figma" subtitle="figma_webview.connect()" color="#a259ff" />;
+        return <FigmaPanel />;
       case "ai":
-        return <PlaceholderPanel icon={<Bot size={24} />} title="AI Assistant" subtitle="ai_context.ready()" color="#3dd68c" />;
+        return <AiAssistantPanel />;
       case "terminal":
         return <PlaceholderPanel icon={<Code2 size={24} />} title="Terminal" subtitle="shell.spawn()" color="#5b6af0" />;
       default:
