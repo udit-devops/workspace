@@ -3,16 +3,13 @@ import { api } from "../api/api";
 import type { User } from "../types/user";
 import type { AuthContextType } from "../types/auth";
 
-
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // ✅ SAFE auth check (runs once)
   useEffect(() => {
-    debugger;
     const initAuth = async () => {
       try {
         const res = await api.get("/auth/me");
@@ -23,26 +20,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setLoading(false);
       }
     };
-
     initAuth();
   }, []);
 
-  const login = async (email: string, password: string) => {
-    const res = await api.post("/auth/login", { email, password });
+  const login = async (email: string, password: string, turnstileToken?: string) => {
+    const res = await api.post("/auth/login", { email, password, turnstileToken });
     setUser(res.data.user);
   };
 
   const signup = async (email: string, password: string, captcha: string): Promise<string> => {
-    const res = await api.post("/auth/signup", { email, password, captcha });
+    const res = await api.post("/auth/signup", { email, password, turnstileToken: captcha });
     return res.data.userId;
   };
 
-const googleLogin = async (credential: string) => {
-  const res = await api.post("/auth/google", { credential });
-  setUser(res.data.user);
-  return res.data.user; // important
-};
-
+  const googleLogin = async (credential: string) => {
+    const res = await api.post("/auth/google", { credential });
+    setUser(res.data.user);
+    return res.data.user;
+  };
 
   const logout = async () => {
     await api.post("/auth/logout");
@@ -65,4 +60,3 @@ export const useAuth = () => {
   }
   return ctx;
 };
-

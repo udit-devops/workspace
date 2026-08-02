@@ -7,6 +7,7 @@ import {
   refreshToken,
   logout,
   me,
+  resendOtp,
 } from "../controllers/authController.js";
 import { requireAuth } from "../middleware/requireAuth.js";
 
@@ -14,6 +15,7 @@ const router = Router();
 
 router.post("/signup", signup);
 router.post("/verify-email", verifyEmail);
+router.post("/resend-otp", resendOtp);
 router.post("/login", login);
 router.post("/google", googleLogin);
 router.get("/refresh", refreshToken);
