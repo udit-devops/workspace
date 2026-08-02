@@ -106,9 +106,9 @@ export default function AppShell({ user }: AppShellProps) {
       case "github":
         return <PlaceholderPanel icon={<Github size={24} />} title="GitHub" subtitle="github_webview.connect()" color="#8b949e" />;
       case "figma":
-        return <PlaceholderPanel icon={<Figma size={24} />} title="Figma" subtitle="figma_webview.connect()" color="#a259ff" />;
+        return <FigmaPanel />;
       case "ai":
-        return <PlaceholderPanel icon={<Bot size={24} />} title="AI Assistant" subtitle="ai_context.ready()" color="#3dd68c" />;
+        return <AiAssistantPanel />;
       case "terminal":
         return <PlaceholderPanel icon={<Code2 size={24} />} title="Terminal" subtitle="shell.spawn()" color="#5b6af0" />;
       default:
