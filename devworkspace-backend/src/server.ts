@@ -8,6 +8,7 @@ import cookieParser from "cookie-parser";
 
 import authRoutes from "./routes/authRoutes.js";
 import notionRoutes from "./routes/notionRoutes.js";
+import filesRoutes from "./routes/filesRoutes.js";
 
 
 
@@ -30,6 +31,7 @@ app.use(cors({
 // MOUNT ROUTES
 app.use("/auth", authRoutes);
 app.use("/auth/notion", notionRoutes);
+app.use("/files", filesRoutes);
 
 app.post("/ai/chat", (req, res) => {
   const { message } = req.body;
