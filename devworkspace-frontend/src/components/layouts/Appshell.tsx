@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Code2, Github, Bot, Figma } from "lucide-react";
+import { Code2, Github } from "lucide-react";
 import TopBar from "./Topbar";
 
 import BottomAIBar from "./BottomAIBar";
@@ -8,6 +8,8 @@ import Sidebar from "./Sidebar";
 import PlaceholderPanel from "../Panels/PlaceHolderpanel";
 import NotionPanel from "../Panels/NotionPanel";
 import DashboardHome from "../Dashboard/DashboardHome";
+import FigmaPanel from "../Figma/FigmaPanel";
+import AiAssistantPanel from "../AiAssistant/AiAssistantPanel";
 import { notionApi } from "../../api/api";
 
 interface AppShellProps {
