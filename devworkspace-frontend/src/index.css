@@ -13,3 +13,8 @@ html, body, #root {
   width: 100%;
   background: #1c1c1e;
 }
+
+@keyframes dw-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}

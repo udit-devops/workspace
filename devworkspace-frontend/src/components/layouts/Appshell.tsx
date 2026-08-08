@@ -7,6 +7,8 @@ import type { ToolId } from "./Sidebar";
 import Sidebar from "./Sidebar";
 import PlaceholderPanel from "../Panels/PlaceHolderpanel";
 import NotionPanel from "../Panels/NotionPanel";
+import EditorPanel from "../../features/editor/components/EditorPanel";
+import EditorErrorBoundary from "../../features/editor/components/EditorErrorBoundary";
 import DashboardHome from "../Dashboard/DashboardHome";
 import { notionApi } from "../../api/api";
 
@@ -102,7 +104,11 @@ export default function AppShell({ user }: AppShellProps) {
           />
         );
       case "editor":
-        return <PlaceholderPanel icon={<Code2 size={24} />} title="Code Editor" subtitle="monaco_editor.init()" color="#5b6af0" />;
+        return (
+          <EditorErrorBoundary>
+            <EditorPanel />
+          </EditorErrorBoundary>
+        );
       case "github":
         return <PlaceholderPanel icon={<Github size={24} />} title="GitHub" subtitle="github_webview.connect()" color="#8b949e" />;
       case "figma":

@@ -3,6 +3,7 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import authRoutes from "./routes/authRoutes.js";
 import notionRoutes from "./routes/notionRoutes.js";
+import filesRoutes from "./routes/filesRoutes.js";
 
 export const app = express();
 
@@ -16,3 +17,4 @@ app.use(cors({
 
 app.use("/auth", authRoutes);
 app.use("/auth/notion", notionRoutes);
+app.use("/files", filesRoutes);
