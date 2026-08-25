@@ -3,7 +3,6 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Mail, Check, ArrowRight, RefreshCw } from "lucide-react";
 import logo from "../assets/logo.png";
 import { api } from "../api/api";
-import "../VerifyEmail.css";
 
 export default function VerifyEmailPage() {
     const [params] = useSearchParams();
@@ -126,8 +125,10 @@ export default function VerifyEmailPage() {
                 {/* Left Side - Branding */}
                 <div className="graphite-left">
                     <div className="graphite-logo-section">
-                        <img src={logo} alt="DevWorkspace" className="graphite-logo" />
-                        <h1 className="graphite-brand">DevWorkspace</h1>
+                        <img src={logo} alt="Devspace" className="graphite-logo" />
+                        <h1 className="graphite-brand">
+                          Dev<span className="brand-accent">spaces</span>
+                        </h1>
                     </div>
 
                     <div className="graphite-hero">

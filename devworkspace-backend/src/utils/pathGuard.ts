@@ -1,16 +1,3 @@
-/**
- * Filesystem sandbox guard.
- *
- * The server exposes only WORKSPACE_ROOT to clients. Every operation is
- * funneled through resolveInWorkspace(), which enforces THREE invariants:
- *
- *   1. The requested workspace folder lives inside WORKSPACE_ROOT.
- *   2. The requested file/folder lives inside WORKSPACE_ROOT.
- *   3. The requested file/folder lives inside the requested workspace folder.
- *
- * This holds even against crafted input: ".." traversal, absolute paths,
- * Windows backslashes, drive letters, symlinks, 8.3 short names and null bytes.
- */
 import path from "node:path";
 import fs from "node:fs/promises";
 
@@ -24,11 +11,11 @@ export class PathGuardError extends Error {
 }
 
 export interface GuardedPaths {
-  /** Canonical absolute path guaranteed to sit inside the workspace. */
+ 
   target: string;
-  /** Canonical absolute path of the opened workspace root. */
+
   workspace: string;
-  /** Canonical absolute path of the sandbox root (WORKSPACE_ROOT). */
+  
   root: string;
   /** Whether target !== workspace. */
   inside: boolean;
