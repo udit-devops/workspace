@@ -23,6 +23,7 @@ import { lab } from "../styles/tokens";
 import FileTree from "./FileTree";
 import ActionBar from "./ActionBar";
 import WorkspaceView from "./WorkspaceView";
+import TerminalPanel from "./TerminalPanel";
 
 type TreeState = "idle" | "loading" | "ready" | "error";
 
@@ -34,6 +35,7 @@ export default function EditorPanel() {
   const [panes, setPanes] = useState<Record<string, PaneState>>({});
   const [activePaneId, setActivePaneId] = useState<string | null>(null);
   const [liveServerOn, setLiveServerOn] = useState(false);
+  const [showTerminal, setShowTerminal] = useState(false);
   const [output, setOutput] = useState<{ type: WorkspaceAction; message: string } | null>(null);
 
   // Backend / workspace state
@@ -566,8 +568,77 @@ export default function EditorPanel() {
           />
         </div>
 
-        {output && (
+        {output && !showTerminal && (
           <OutputDrawer output={output} onClose={() => setOutput(null)} />
+        )}
+
+        {showTerminal && (
+          <div
+            style={{
+              height: 220,
+              flexShrink: 0,
+              display: "flex",
+              flexDirection: "column",
+              background: "#000000",
+              borderTop: `1px solid ${lab.borderStrong}`,
+            }}
+          >
+            <div
+              style={{
+                height: 24,
+                flexShrink: 0,
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "0 10px",
+                background: lab.bgRaised,
+                borderBottom: `1px solid ${lab.border}`,
+              }}
+            >
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: lab.green }} />
+              <span
+                style={{
+                  fontSize: 10,
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  color: lab.textMuted,
+                  fontFamily: lab.monospace,
+                }}
+              >
+                Terminal (PowerShell / Bash)
+              </span>
+              <div style={{ flex: 1 }} />
+              <button
+                onClick={() => setShowTerminal(false)}
+                title="Close terminal"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 18,
+                  height: 18,
+                  border: "none",
+                  background: "transparent",
+                  color: lab.textFaint,
+                  cursor: "pointer",
+                  borderRadius: 3,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = lab.bgActive;
+                  e.currentTarget.style.color = lab.text;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "transparent";
+                  e.currentTarget.style.color = lab.textFaint;
+                }}
+              >
+                <X size={12} />
+              </button>
+            </div>
+            <div style={{ flex: 1, minHeight: 0 }}>
+              <TerminalPanel />
+            </div>
+          </div>
         )}
 
         <div
@@ -585,6 +656,27 @@ export default function EditorPanel() {
             fontFamily: lab.monospace,
           }}
         >
+          <button
+            onClick={() => setShowTerminal((prev) => !prev)}
+            title="Toggle Terminal"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              border: "none",
+              background: showTerminal ? lab.bgActive : "transparent",
+              color: showTerminal ? lab.amber : lab.textMuted,
+              cursor: "pointer",
+              fontSize: 11,
+              padding: "2px 6px",
+              borderRadius: 3,
+              fontFamily: "inherit",
+            }}
+          >
+            <span>$_</span>
+            <span>Terminal</span>
+          </button>
+          <span style={{ color: lab.textFaint }}>·</span>
           <button
             onClick={handleToggleTheme}
             title={themeMode === "dark" ? "Switch to light theme" : "Switch to dark theme"}
