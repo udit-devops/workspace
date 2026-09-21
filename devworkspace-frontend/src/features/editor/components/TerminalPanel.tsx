@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Terminal } from "xterm";
 import { FitAddon } from "xterm-addon-fit";
+import { workspaceStore } from "../services/workspaceStore";
 import "xterm/css/xterm.css";
 
 export default function TerminalPanel() {
@@ -28,7 +29,6 @@ export default function TerminalPanel() {
       term.loadAddon(fitAddon);
       term.open(terminalRef.current);
 
-      // Delay initial fit slightly so DOM flexbox layout has rendered
       const timer = setTimeout(() => {
         try {
           fitAddon.fit();
@@ -37,11 +37,15 @@ export default function TerminalPanel() {
 
       termInstance.current = term;
 
-      const ws = new WebSocket("ws://localhost:5000/ws/terminal");
+      // Get active workspace path and append to WS URL
+      const currentWorkspace = workspaceStore.getWorkspace() || "";
+      const wsUrl = `ws://localhost:5000/ws/terminal?workspace=${encodeURIComponent(currentWorkspace)}`;
+
+      const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
 
       ws.onopen = () => {
-        term.writeln("\x1b[32m[Devspace Terminal Connected]\x1b[0m\r\n");
+        term.writeln(`\x1b[32m[Devspace Terminal Connected → ${currentWorkspace || "Default"}]\x1b[0m\r\n`);
         setTimeout(() => fitAddon.fit(), 50);
       };
 
@@ -64,7 +68,6 @@ export default function TerminalPanel() {
         }
       });
 
-      // Use ResizeObserver to automatically adjust terminal grid when drawer size changes
       const resizeObserver = new ResizeObserver(() => {
         try {
           fitAddon.fit();
