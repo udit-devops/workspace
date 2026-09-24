@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import { Code2, Github } from "lucide-react";
+import { Github } from "lucide-react";
 import TopBar from "./Topbar";
-
 import BottomAIBar from "./BottomAIBar";
 import type { ToolId } from "./Sidebar";
 import Sidebar from "./Sidebar";
@@ -12,6 +11,7 @@ import EditorErrorBoundary from "../../features/editor/components/EditorErrorBou
 import DashboardHome from "../Dashboard/DashboardHome";
 import FigmaPanel from "../Figma/FigmaPanel";
 import AiAssistantPanel from "../AiAssistant/AiAssistantPanel";
+import TerminalPanel from "../Terminal/TerminalPanel";
 import { notionApi } from "../../api/api";
 
 interface AppShellProps {
@@ -118,7 +118,7 @@ export default function AppShell({ user }: AppShellProps) {
       case "ai":
         return <AiAssistantPanel />;
       case "terminal":
-        return <PlaceholderPanel icon={<Code2 size={24} />} title="Terminal" subtitle="shell.spawn()" color="#5b6af0" />;
+        return <TerminalPanel />;
       default:
         return null;
     }

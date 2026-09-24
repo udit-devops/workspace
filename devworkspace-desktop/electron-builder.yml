@@ -1,0 +1,43 @@
+appId: com.devworkspace.desktop
+productName: DevWorkspace
+copyright: Copyright © 2026 DevWorkspace
+
+directories:
+  output: release
+  buildResources: assets
+
+files:
+  - dist-electron/**/*
+  - package.json
+
+# Production dependencies (electron-updater) are bundled automatically.
+asar: true
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  # Code signing - REQUIRED for SmartScreen trust.
+  # Option 1 (recommended, ~$10/mo): Azure Trusted Signing
+  # azureSignOptions:
+  #   publisherName: "Your Company"
+  #   endpoint: "https://eus.codesigning.azure.net/"
+  #   certificateProfileName: "your-profile"
+  # Option 2: classic certificate
+  # certificateFile: build/cert.pfx
+  # certificatePassword: ${env.CSC_KEY_PASSWORD}
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: DevWorkspace
+
+# Auto-update feed - enable once you host releases (e.g. GitHub Releases).
+# publish:
+#   provider: github
+#   owner: your-org
+#   repo: devworkspace-desktop

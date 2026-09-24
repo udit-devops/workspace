@@ -1,0 +1,25 @@
+{
+  "name": "devworkspace-desktop",
+  "version": "1.0.0",
+  "description": "DevWorkspace Windows desktop app (Electron shell)",
+  "main": "dist-electron/main.js",
+  "author": "DevWorkspace",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "npm run build && electron .",
+    "start": "electron .",
+    "dist": "npm run build && electron-builder --win nsis",
+    "dist:portable": "npm run build && electron-builder --win portable"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "electron-updater": "^6.3.9",
+    "node-pty": "^1.1.0"
+  }
+}
