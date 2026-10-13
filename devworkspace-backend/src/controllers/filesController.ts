@@ -11,7 +11,7 @@ export const getRoot = asyncHandler(
 );
 
 export const getDirs = asyncHandler(
-  async (req: Request & { user?: any }, res: Response) => {
+  async (req: Request, res: Response) => {
     const workspace = readWorkspace(req);
     const dirPath = readPath(req);
     const dirs = await fileService.listDirs(workspace, dirPath);
@@ -20,7 +20,7 @@ export const getDirs = asyncHandler(
 );
 
 export const getTree = asyncHandler(
-  async (req: Request & { user?: any }, res: Response) => {
+  async (req: Request, res: Response) => {
     const workspace = readWorkspace(req);
     const tree = await fileService.getTree(workspace);
     res.json({ workspace, tree });
@@ -28,7 +28,7 @@ export const getTree = asyncHandler(
 );
 
 export const readFile = asyncHandler(
-  async (req: Request & { user?: any }, res: Response) => {
+  async (req: Request, res: Response) => {
     const workspace = readWorkspace(req);
     const filePath = readPath(req);
     const file = await fileService.readFile(workspace, filePath);
@@ -37,7 +37,7 @@ export const readFile = asyncHandler(
 );
 
 export const writeFile = asyncHandler(
-  async (req: Request & { user?: any }, res: Response) => {
+  async (req: Request, res: Response) => {
     const workspace = readWorkspace(req);
     const filePath = readPath(req);
     const { content } = req.body ?? {};
@@ -50,7 +50,7 @@ export const writeFile = asyncHandler(
 );
 
 export const createItem = asyncHandler(
-  async (req: Request & { user?: any }, res: Response) => {
+  async (req: Request, res: Response) => {
     const workspace = readWorkspace(req);
     const { parentPath, name, type } = req.body ?? {};
     if (type !== "file" && type !== "directory") {
@@ -58,7 +58,7 @@ export const createItem = asyncHandler(
     }
     const entry = await fileService.createItem(
       workspace,
-      readWorkspaceScope(parentPath, req),
+      readParentPath(parentPath),
       String(name ?? ""),
       type
     );
@@ -67,7 +67,7 @@ export const createItem = asyncHandler(
 );
 
 export const deleteItem = asyncHandler(
-  async (req: Request & { user?: any }, res: Response) => {
+  async (req: Request, res: Response) => {
     const workspace = readWorkspace(req);
     const filePath = readPath(req);
     const result = await fileService.deleteItem(workspace, filePath);
@@ -87,8 +87,7 @@ function readPath(req: Request): string {
   return filePath;
 }
 
-// parentPath may live under either the query workspace or its own body field.
-function readWorkspaceScope(parentPath: string | undefined, req: Request): string {
+function readParentPath(parentPath: unknown): string {
   if (typeof parentPath === "string" && parentPath.length > 0) return parentPath;
   throw badRequest("parentPath is required");
 }

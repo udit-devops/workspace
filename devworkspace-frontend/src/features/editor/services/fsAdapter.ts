@@ -12,9 +12,6 @@
 import { api } from "../../../api/api";
 import type { FileEntry } from "../types";
 
-const devos = (window as unknown as { devos?: Record<string, any> }).devos;
-export const isElectron = Boolean(devos);
-
 export interface ReadFileResult {
   path: string;
   name: string;
@@ -31,6 +28,20 @@ export interface CreateEntryResult {
   kind: "file" | "directory";
   language?: string;
 }
+
+/** Contract the Electron preload script must expose as `window.devos`. */
+export interface DevosBridge {
+  getRoot(): Promise<string>;
+  listDir(dirPath: string): Promise<{ name: string; path: string }[]>;
+  getTree(workspace: string): Promise<FileEntry>;
+  readFile(filePath: string): Promise<ReadFileResult>;
+  writeFile(filePath: string, content: string): Promise<ReadFileResult>;
+  createItem(parentPath: string, name: string, kind: "file" | "directory"): Promise<CreateEntryResult>;
+  deleteItem(filePath: string): Promise<{ path: string }>;
+}
+
+const devos = (window as { devos?: DevosBridge }).devos;
+export const isElectron = Boolean(devos);
 
 const toPosix = (p: string): string => p.replace(/\\/g, "/");
 
@@ -98,16 +109,10 @@ export const fsAdapter = {
     name: string,
     kind: "file" | "directory"
   ): Promise<CreateEntryResult> {
-    if (isElectron) {
-      return devos!.createItem(parentPath, name, kind);
-    }
-    const res = await api.post("/files/create", {
-      workspace,
-      parentPath,
-      name,
-      type: kind,
-    });
-    return res.data.entry;
+    const entry: CreateEntryResult = isElectron
+      ? await devos!.createItem(parentPath, name, kind)
+      : (await api.post("/files/create", { workspace, parentPath, name, type: kind })).data.entry;
+    return { ...entry, path: toPosix(entry.path) };
   },
 
   async deleteItem(workspace: string, filePath: string): Promise<{ path: string }> {

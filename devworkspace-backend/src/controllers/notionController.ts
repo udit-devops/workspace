@@ -1,9 +1,10 @@
 import type { Request, Response } from "express";
 import { notionService } from "../services/notionService.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { CLIENT_URL } from "../config/env.js";
 
-export const connect = asyncHandler(async (req: Request & { user?: any }, res: Response) => {
-  const state = notionService.createState(req.user.id);
+export const connect = asyncHandler(async (req: Request, res: Response) => {
+  const state = notionService.createState(req.user!.id);
   res.redirect(notionService.getOAuthUrl(state));
 });
 
@@ -32,8 +33,8 @@ export const callback = asyncHandler(async (req: Request, res: Response) => {
   }
 });
 
-export const status = asyncHandler(async (req: Request & { user?: any }, res: Response) => {
-  const integration = await notionService.getIntegration(req.user.id);
+export const status = asyncHandler(async (req: Request, res: Response) => {
+  const integration = await notionService.getIntegration(req.user!.id);
   if (!integration) {
     return res.json({ connected: false });
   }
@@ -44,8 +45,8 @@ export const status = asyncHandler(async (req: Request & { user?: any }, res: Re
   });
 });
 
-export const pages = asyncHandler(async (req: Request & { user?: any }, res: Response) => {
-  const integration = await notionService.getIntegration(req.user.id);
+export const pages = asyncHandler(async (req: Request, res: Response) => {
+  const integration = await notionService.getIntegration(req.user!.id);
   if (!integration) {
     return res.status(400).json({ message: "Notion not connected" });
   }
@@ -54,9 +55,9 @@ export const pages = asyncHandler(async (req: Request & { user?: any }, res: Res
   res.json({ pages });
 });
 
-export const pageContent = asyncHandler(async (req: Request & { user?: any }, res: Response) => {
+export const pageContent = asyncHandler(async (req: Request, res: Response) => {
   const { pageId } = req.params;
-  const integration = await notionService.getIntegration(req.user.id);
+  const integration = await notionService.getIntegration(req.user!.id);
   if (!integration) {
     return res.status(400).json({ message: "Notion not connected" });
   }
@@ -65,10 +66,10 @@ export const pageContent = asyncHandler(async (req: Request & { user?: any }, re
   res.json({ page });
 });
 
-export const updateBlock = asyncHandler(async (req: Request & { user?: any }, res: Response) => {
+export const updateBlock = asyncHandler(async (req: Request, res: Response) => {
   const { blockId } = req.params;
   const { text, type } = req.body;
-  const integration = await notionService.getIntegration(req.user.id);
+  const integration = await notionService.getIntegration(req.user!.id);
   if (!integration) {
     return res.status(400).json({ message: "Notion not connected" });
   }
@@ -77,15 +78,15 @@ export const updateBlock = asyncHandler(async (req: Request & { user?: any }, re
   res.json({ success: true });
 });
 
-export const addBlocks = asyncHandler(async (req: Request & { user?: any }, res: Response) => {
+export const addBlocks = asyncHandler(async (req: Request, res: Response) => {
   const { pageId } = req.params;
-  const { blocks } = req.body;
-  const integration = await notionService.getIntegration(req.user.id);
+  const { blocks, after } = req.body;
+  const integration = await notionService.getIntegration(req.user!.id);
   if (!integration) {
     return res.status(400).json({ message: "Notion not connected" });
   }
 
-  const result = await notionService.appendBlocks(integration.accessToken, pageId as string, blocks);
+  const result = await notionService.appendBlocks(integration.accessToken, pageId as string, blocks, after);
   const newBlocks = (result.results || []).map((b: any) => ({
     id: b.id,
     type: b.type,
@@ -94,9 +95,9 @@ export const addBlocks = asyncHandler(async (req: Request & { user?: any }, res:
   res.json({ blocks: newBlocks });
 });
 
-export const removeBlock = asyncHandler(async (req: Request & { user?: any }, res: Response) => {
+export const removeBlock = asyncHandler(async (req: Request, res: Response) => {
   const { blockId } = req.params;
-  const integration = await notionService.getIntegration(req.user.id);
+  const integration = await notionService.getIntegration(req.user!.id);
   if (!integration) {
     return res.status(400).json({ message: "Notion not connected" });
   }
@@ -105,9 +106,9 @@ export const removeBlock = asyncHandler(async (req: Request & { user?: any }, re
   res.json({ success: true });
 });
 
-export const createPage = asyncHandler(async (req: Request & { user?: any }, res: Response) => {
+export const createPage = asyncHandler(async (req: Request, res: Response) => {
   const { parentPageId, title } = req.body;
-  const integration = await notionService.getIntegration(req.user.id);
+  const integration = await notionService.getIntegration(req.user!.id);
   if (!integration) {
     return res.status(400).json({ message: "Notion not connected" });
   }
@@ -116,14 +117,14 @@ export const createPage = asyncHandler(async (req: Request & { user?: any }, res
   res.json({ page });
 });
 
-export const disconnect = asyncHandler(async (req: Request & { user?: any }, res: Response) => {
-  await notionService.disconnect(req.user.id);
+export const disconnect = asyncHandler(async (req: Request, res: Response) => {
+  await notionService.disconnect(req.user!.id);
   res.json({ message: "Disconnected" });
 });
 
 function closePopupScript(data: Record<string, unknown>) {
   return `<!DOCTYPE html><html><body><script>
-    window.opener.postMessage(${JSON.stringify(data)}, "${process.env.CLIENT_URL || "http://localhost:5173"}");
+    window.opener.postMessage(${JSON.stringify(data)}, "${CLIENT_URL}");
     window.close();
   </script></body></html>`;
 }

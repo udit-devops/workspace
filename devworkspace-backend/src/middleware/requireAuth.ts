@@ -7,7 +7,7 @@ import { publicUserSelect } from "../utils/publicUser.js";
 export async function getUserFromToken(token: string | undefined) {
   if (!token) return null;
   try {
-    const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
     return await prisma.user.findUnique({
       where: { id: decoded.userId },
       select: publicUserSelect,
@@ -17,11 +17,7 @@ export async function getUserFromToken(token: string | undefined) {
   }
 }
 
-export const requireAuth = async (
-  req: Request & { user?: any },
-  res: Response,
-  next: NextFunction
-) => {
+export const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
   const user = await getUserFromToken(req.cookies?.accessToken);
   if (!user) return res.status(401).json({ message: "Not authenticated" });
 

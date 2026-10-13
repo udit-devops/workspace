@@ -13,6 +13,7 @@ import DashboardHome from "../Dashboard/DashboardHome";
 import FigmaPanel from "../Figma/FigmaPanel";
 import AiAssistantPanel from "../AiAssistant/AiAssistantPanel";
 import { notionApi } from "../../api/api";
+import { API_ORIGIN, API_URL } from "../../config";
 
 interface AppShellProps {
   user?: { name?: string; email?: string } | null;
@@ -56,12 +57,12 @@ export default function AppShell({ user }: AppShellProps) {
   }, []);
 
   const handleNotionConnect = useCallback(() => {
-    window.open("http://localhost:5000/auth/notion/connect", "notion-oauth", "width=600,height=700");
+    window.open(`${API_URL}/auth/notion/connect`, "notion-oauth", "width=600,height=700");
   }, []);
 
   useEffect(() => {
     const handler = (event: MessageEvent) => {
-      if (event.origin !== "http://localhost:5000") return;
+      if (event.origin !== API_ORIGIN) return;
       if (event.data?.success) {
         setConnectedTools((prev) => (prev.includes("notion") ? prev : [...prev, "notion"]));
         notionApi.getPages().then((res) => setNotionPages(res.pages)).catch(() => {});
@@ -98,7 +99,9 @@ export default function AppShell({ user }: AppShellProps) {
       setConnectedTools((prev) => prev.filter((t) => t !== "notion"));
       setNotionPages([]);
       setSelectedPage(null);
-    } catch {}
+    } catch (err) {
+      console.error("Notion disconnect failed:", err);
+    }
   }, []);
 
   useEffect(() => {

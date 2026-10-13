@@ -1,7 +1,8 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
+import { API_URL } from "../config";
 
 export const api = axios.create({
-  baseURL: "http://localhost:5000",
+  baseURL: API_URL,
   withCredentials: true,
 });
 
@@ -49,8 +50,8 @@ export const notionApi = {
     const res = await api.patch(`/auth/notion/blocks/${blockId}`, { text, type });
     return res.data;
   },
-  async addBlocks(pageId: string, blocks: { type: string; text: string }[]) {
-    const res = await api.post(`/auth/notion/pages/${pageId}/blocks`, { blocks });
+  async addBlocks(pageId: string, blocks: { type: string; text: string }[], after?: string) {
+    const res = await api.post(`/auth/notion/pages/${pageId}/blocks`, { blocks, after });
     return res.data;
   },
   async deleteBlock(blockId: string) {

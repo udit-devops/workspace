@@ -144,7 +144,13 @@ export const notionService = {
     return res.json();
   },
 
-  async appendBlocks(accessToken: string, pageId: string, blocks: { type: string; text: string }[]) {
+  /** Appends blocks to a page — after a given block when `after` is set, else at the end. */
+  async appendBlocks(
+    accessToken: string,
+    pageId: string,
+    blocks: { type: string; text: string }[],
+    after?: string
+  ) {
     const children = blocks.map(b => {
       const block: any = { object: "block", type: b.type };
       block[b.type] = { rich_text: richText(b.text) };
@@ -154,7 +160,7 @@ export const notionService = {
     const res = await fetch(`${NOTION_API}/blocks/${pageId}/children`, {
       method: "PATCH",
       headers: headers(accessToken),
-      body: JSON.stringify({ children }),
+      body: JSON.stringify({ children, ...(after && { after }) }),
     });
 
     if (!res.ok) {

@@ -18,6 +18,7 @@ import {
   updateSplitRatio,
 } from "../utils/layout";
 import { fsAdapter } from "../services/fsAdapter";
+import { findEntryByPath, languageFromFileName } from "../utils/language";
 import { workspaceStore } from "../services/workspaceStore";
 import { lab } from "../styles/tokens";
 import FileTree from "./FileTree";
@@ -229,7 +230,7 @@ export default function EditorPanel() {
       const target = activePaneId ?? collectPaneIds(layout)[0] ?? null;
       if (!target) return;
 
-      const entry = findEntry(root, path);
+      const entry = findEntryByPath(root, path);
       if (!entry || entry.kind !== "file") return;
 
       setActivePaneId(target);
@@ -250,7 +251,7 @@ export default function EditorPanel() {
               {
                 path,
                 name: entry.name,
-                language: entry.language ?? languageFromName(entry.name),
+                language: entry.language ?? languageFromFileName(entry.name),
                 isDirty: false,
                 loading: true,
               },
@@ -369,25 +370,6 @@ export default function EditorPanel() {
     });
   }, []);
 
-  const handleCreate = useCallback(
-    async (parentPath: string, name: string, kind: "file" | "directory") => {
-      if (!workspace) return;
-      try {
-        const entry = await fsAdapter.createItem(workspace, parentPath, name, kind);
-        const { tree } = await fsAdapter.getTree(workspace);
-        setRoot(tree);
-        if (kind === "file" && entry && entry.path) {
-          openFileDirect(entry.path);
-        }
-      } catch (err) {
-        flash(
-          `Create "name" failed: ${err instanceof Error ? err.message : "error"}`
-        );
-      }
-    },
-    [workspace, flash]
-  );
-
   // Opens a freshly-created file without a network read (content is empty).
   const openFileDirect = useCallback(
     (path: string) => {
@@ -414,7 +396,7 @@ export default function EditorPanel() {
               {
                 path,
                 name,
-                language: languageFromName(name),
+                language: languageFromFileName(name),
                 isDirty: false,
                 loading: false,
               },
@@ -424,6 +406,21 @@ export default function EditorPanel() {
       });
     },
     [activePaneId, layout, ensurePane]
+  );
+
+  const handleCreate = useCallback(
+    async (parentPath: string, name: string, kind: "file" | "directory") => {
+      if (!workspace) return;
+      try {
+        const entry = await fsAdapter.createItem(workspace, parentPath, name, kind);
+        const { tree } = await fsAdapter.getTree(workspace);
+        setRoot(tree);
+        if (kind === "file") openFileDirect(entry.path);
+      } catch (err) {
+        flash(`Create "${name}" failed: ${err instanceof Error ? err.message : "error"}`);
+      }
+    },
+    [workspace, flash, openFileDirect]
   );
 
   const handleDelete = useCallback(
@@ -521,6 +518,7 @@ export default function EditorPanel() {
     >
       {treeState === "ready" && root && (
         <FileTree
+          key={root.path}
           root={root}
           activePath={activePaneId ? panes[activePaneId]?.activePath ?? null : null}
           onOpenFile={handleOpenFile}
@@ -1381,40 +1379,6 @@ function OutputDrawer({
   );
 }
 
-function findEntry(root: FileEntry, path: string): FileEntry | null {
-  if (root.path === path) return root;
-  if (root.kind === "directory" && root.children) {
-    for (const child of root.children) {
-      const found = findEntry(child, path);
-      if (found) return found;
-    }
-  }
-  return null;
-}
-
 function isUnder(basePath: string, candidate: string): boolean {
   return candidate === basePath || candidate.startsWith(basePath + "/");
-}
-
-function languageFromName(name: string): string {
-  const extension = /\.([a-z0-9]+)$/i.exec(name)?.[1]?.toLowerCase() ?? "";
-  const map: Record<string, string> = {
-    ts: "typescript",
-    tsx: "typescript",
-    js: "javascript",
-    jsx: "javascript",
-    json: "json",
-    css: "css",
-    scss: "scss",
-    html: "html",
-    md: "markdown",
-    svg: "xml",
-    xml: "xml",
-    py: "python",
-    sql: "sql",
-    yml: "yaml",
-    yaml: "yaml",
-    sh: "shell",
-  };
-  return map[extension] ?? "plaintext";
 }

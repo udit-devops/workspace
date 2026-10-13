@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import { randomInt } from "node:crypto";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { prisma } from "../config/prisma.js";
@@ -16,6 +17,7 @@ const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const ACCESS_MAX_AGE = 15 * 60 * 1000;
 const REFRESH_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
+const OTP_TTL = 10 * 60 * 1000;
 const cookieOptions = { httpOnly: true, sameSite: "strict", secure: false } as const;
 
 function setAccessCookie(res: Response, userId: string) {
@@ -25,6 +27,20 @@ function setAccessCookie(res: Response, userId: string) {
 function setAuthCookies(res: Response, userId: string) {
   setAccessCookie(res, userId);
   res.cookie("refreshToken", generateRefreshToken(userId), { ...cookieOptions, maxAge: REFRESH_MAX_AGE });
+}
+
+/** Create a 6-digit code valid for 10 minutes and email it to the user. */
+async function issueOtp(user: { id: string; email: string }) {
+  const otp = randomInt(100000, 1000000).toString();
+  await prisma.verificationToken.create({
+    data: {
+      email: user.email,
+      userId: user.id,
+      token: otp,
+      expiresAt: new Date(Date.now() + OTP_TTL),
+    },
+  });
+  await sendVerificationEmail(user.email, otp);
 }
 
 // ======================================================================
@@ -53,29 +69,14 @@ export const signup = asyncHandler(async (req: Request, res: Response) => {
     },
   });
 
-  // Generate OTP
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
-  await prisma.verificationToken.create({
-  data: {
-    email: user.email,              // REQUIRED
-    userId: user.id,
-    token: otp,
-    expiresAt: new Date(Date.now() + 10 * 60 * 1000),
-  },
-});
-
-
-  // Send OTP email
-  await sendVerificationEmail(email, otp);
-
+  await issueOtp(user);
   res.status(201).json({ message: "Verification email sent", userId: user.id });
 });
 
 // ======================================================================
 // 📌 VERIFY EMAIL (OTP)
 // ======================================================================
-export const verifyEmail = asyncHandler(async (req:any, res:any) => {
+export const verifyEmail = asyncHandler(async (req: Request, res: Response) => {
   const { userId, otp } = req.body;
 
   const record = await prisma.verificationToken.findFirst({
@@ -118,20 +119,7 @@ export const resendOtp = asyncHandler(async (req: Request, res: Response) => {
   }
 
   await prisma.verificationToken.deleteMany({ where: { userId } });
-
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
-  await prisma.verificationToken.create({
-    data: {
-      email: user.email,
-      userId: user.id,
-      token: otp,
-      expiresAt: new Date(Date.now() + 10 * 60 * 1000),
-    },
-  });
-
-  await sendVerificationEmail(user.email, otp);
-
+  await issueOtp(user);
   res.json({ message: "New OTP sent" });
 });
 
@@ -178,33 +166,33 @@ export const googleLogin = asyncHandler(async (req: Request, res: Response) => {
   const payload = ticket.getPayload();
   if (!payload) return res.status(400).json({ message: "Invalid Google token" });
 
-let user = await prisma.user.findUnique({
-  where: { email: payload.email! },
-});
-
-if (user && !user.googleId) {
-  user = await prisma.user.update({
-    where: { id: user.id },
-    data: {
-      googleId: payload.sub!,
-      provider: "google",
-      isVerified: true,
-      name: payload.name ?? user.name,
-    },
+  let user = await prisma.user.findUnique({
+    where: { email: payload.email! },
   });
-}
 
-if (!user) {
-  user = await prisma.user.create({
-    data: {
-      email: payload.email!,
-      googleId: payload.sub!,
-      name: payload.name!,
-      isVerified: true,
-      provider: "google",
-    },
-  });
-}
+  if (user && !user.googleId) {
+    user = await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        googleId: payload.sub!,
+        provider: "google",
+        isVerified: true,
+        name: payload.name ?? user.name,
+      },
+    });
+  }
+
+  if (!user) {
+    user = await prisma.user.create({
+      data: {
+        email: payload.email!,
+        googleId: payload.sub!,
+        name: payload.name!,
+        isVerified: true,
+        provider: "google",
+      },
+    });
+  }
 
   setAuthCookies(res, user.id);
   res.json({ user: toPublicUser(user) });
@@ -220,7 +208,7 @@ export const refreshToken = asyncHandler(async (req: Request, res: Response) => 
     return res.status(401).json({ message: "Refresh token missing" });
 
   try {
-    const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
     setAccessCookie(res, decoded.userId);
     res.json({ message: "Token refreshed" });
   } catch {
@@ -237,10 +225,6 @@ export const logout = asyncHandler(async (_req: Request, res: Response) => {
   res.json({ message: "Logged out successfully" });
 });
 
-
-export const me = async (req: Request & { user?: any }, res: Response) => {
-  return res.json({
-    user: req.user,
-  });
+export const me = (req: Request, res: Response) => {
+  res.json({ user: req.user });
 };
-

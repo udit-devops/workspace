@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { Terminal } from "xterm";
 import { FitAddon } from "xterm-addon-fit";
 import { api } from "../../../api/api";
+import { WS_URL } from "../../../config";
 import "xterm/css/xterm.css";
 
 export default function TerminalPanel({ workspace }: { workspace: string }) {
@@ -32,7 +33,9 @@ export default function TerminalPanel({ workspace }: { workspace: string }) {
       const timer = setTimeout(() => {
         try {
           fitAddon.fit();
-        } catch {}
+        } catch {
+          // Container not measurable yet; the ResizeObserver fits it once laid out.
+        }
       }, 50);
 
       termInstance.current = term;
@@ -48,7 +51,7 @@ export default function TerminalPanel({ workspace }: { workspace: string }) {
 
       const connect = () => {
         if (disposed) return;
-        ws = new WebSocket(`ws://localhost:5000/ws/terminal?workspace=${encodeURIComponent(workspace)}`);
+        ws = new WebSocket(`${WS_URL}/ws/terminal?workspace=${encodeURIComponent(workspace)}`);
         wsRef.current = ws;
 
         ws.onopen = () => {

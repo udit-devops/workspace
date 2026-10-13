@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { GoogleLogin } from "@react-oauth/google";
-import { useAuth } from "../context/AuthContext";
+import { GoogleLogin, type CredentialResponse } from "@react-oauth/google";
+import { useAuth } from "../context/useAuth";
+import { getErrorMessage } from "../api/errors";
+import { TURNSTILE_SITE_KEY } from "../config";
 import {
   Mail,
   Lock,
@@ -42,7 +44,7 @@ export default function AuthPage() {
     const el = document.getElementById(id);
     if (el && el.childElementCount === 0 && window.turnstile) {
       window.turnstile.render(`#${id}`, {
-        sitekey: "0x4AAAAAACCcd2b8x6PCWQ_p",
+        sitekey: TURNSTILE_SITE_KEY,
         theme: "dark",
         callback: (token: string) => setCaptchaToken(token),
       });
@@ -73,12 +75,8 @@ export default function AuthPage() {
     try {
       await login(email, password, captchaToken);
       navigate("/dashboard");
-    } catch (err: any) {
-      const msg =
-        err.response?.data?.message || err.message || "Login failed. Please try again.";
-      setError(msg);
-      console.error("Login error:", err);
-      console.error("Error response:", err.response?.data);
+    } catch (err) {
+      setError(getErrorMessage(err, "Login failed. Please try again."));
     } finally {
       setIsLoading(false);
     }
@@ -108,14 +106,14 @@ export default function AuthPage() {
     try {
       const userId = await signup(email, password, captchaToken);
       navigate(`/verify-email?userId=${userId}`);
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Signup failed. Please try again.");
+    } catch (err) {
+      setError(getErrorMessage(err, "Signup failed. Please try again."));
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleGoogleSuccess = async (res: any) => {
+  const handleGoogleSuccess = async (res: CredentialResponse) => {
     if (!res.credential) return;
     setIsLoading(true);
     setError("");
