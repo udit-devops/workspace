@@ -1,8 +1,35 @@
-import axios from "axios";
+import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 
 export const api = axios.create({
   baseURL: "http://localhost:5000",
   withCredentials: true,
+});
+
+// On 401, refresh the access token once and retry. Concurrent 401s share one refresh call.
+let refreshing: Promise<unknown> | null = null;
+
+api.interceptors.response.use(undefined, async (error: AxiosError) => {
+  const original = error.config as (InternalAxiosRequestConfig & { _retried?: boolean }) | undefined;
+  if (
+    error.response?.status !== 401 ||
+    !original ||
+    original._retried ||
+    original.url === "/auth/refresh"
+  ) {
+    throw error;
+  }
+
+  original._retried = true;
+  refreshing ??= api.get("/auth/refresh").finally(() => {
+    refreshing = null;
+  });
+
+  try {
+    await refreshing;
+  } catch {
+    throw error;
+  }
+  return api(original);
 });
 
 export const notionApi = {

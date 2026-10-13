@@ -18,6 +18,6 @@ export interface AuthContextType {
     captcha: string
   ) => Promise<string>; // ✅ RETURN userId
   googleLogin: (credential: string) => Promise<void>;
+  verifyEmail: (userId: string, otp: string) => Promise<void>;
   logout: () => Promise<void>;
-  checkAuth?: () => Promise<void>;
 }

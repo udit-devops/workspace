@@ -48,6 +48,12 @@ export default function EditorPanel() {
 
   const autosaveTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const inFlight = useRef<Set<string>>(new Set());
+  const pendingSaves = useRef<Set<string>>(new Set());
+  // Timers and async saves read the latest panes from here, never a stale closure.
+  const panesRef = useRef(panes);
+  useEffect(() => {
+    panesRef.current = panes;
+  }, [panes]);
 
   const flash = useCallback((message: string) => {
     setOutput((prev) => {
@@ -266,11 +272,14 @@ export default function EditorPanel() {
   );
 
   const persistFile = useCallback(
-    async (paneId: string, filePath: string) => {
+    async function save(paneId: string, filePath: string): Promise<void> {
       if (!workspace) return;
       const key = `${paneId}::${filePath}`;
-      if (inFlight.current.has(key)) return;
-      const content = panes[paneId]?.contents[filePath];
+      if (inFlight.current.has(key)) {
+        pendingSaves.current.add(key);
+        return;
+      }
+      const content = panesRef.current[paneId]?.contents[filePath];
       if (content === undefined) return;
 
       inFlight.current.add(key);
@@ -285,7 +294,9 @@ export default function EditorPanel() {
               ...pane,
               originals: { ...pane.originals, [filePath]: content },
               tabs: pane.tabs.map((tab) =>
-                tab.path === filePath ? { ...tab, isDirty: false } : tab
+                tab.path === filePath
+                  ? { ...tab, isDirty: pane.contents[filePath] !== content }
+                  : tab
               ),
             },
           };
@@ -296,9 +307,10 @@ export default function EditorPanel() {
         );
       } finally {
         inFlight.current.delete(key);
+        if (pendingSaves.current.delete(key)) save(paneId, filePath);
       }
     },
-    [workspace, panes, flash]
+    [workspace, flash]
   );
 
   const scheduleAutosave = useCallback(
@@ -636,7 +648,7 @@ export default function EditorPanel() {
               </button>
             </div>
             <div style={{ flex: 1, minHeight: 0 }}>
-              <TerminalPanel />
+              <TerminalPanel key={workspace} workspace={workspace} />
             </div>
           </div>
         )}

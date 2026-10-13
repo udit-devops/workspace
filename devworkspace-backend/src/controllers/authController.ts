@@ -8,10 +8,24 @@ import {
   generateAccessToken,
   generateRefreshToken,
 } from "../utils/generateTokens.js";
-import { verifyTurnstile } from "../utils/verifyTurnstile.js"; 
+import { verifyTurnstile } from "../utils/verifyTurnstile.js";
+import { toPublicUser } from "../utils/publicUser.js";
 import { OAuth2Client } from "google-auth-library";
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+const ACCESS_MAX_AGE = 15 * 60 * 1000;
+const REFRESH_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
+const cookieOptions = { httpOnly: true, sameSite: "strict", secure: false } as const;
+
+function setAccessCookie(res: Response, userId: string) {
+  res.cookie("accessToken", generateAccessToken(userId), { ...cookieOptions, maxAge: ACCESS_MAX_AGE });
+}
+
+function setAuthCookies(res: Response, userId: string) {
+  setAccessCookie(res, userId);
+  res.cookie("refreshToken", generateRefreshToken(userId), { ...cookieOptions, maxAge: REFRESH_MAX_AGE });
+}
 
 // ======================================================================
 // 📌 SIGNUP (WITH EMAIL VERIFICATION)
@@ -19,8 +33,7 @@ const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 export const signup = asyncHandler(async (req: Request, res: Response) => {
   const { email, password, turnstileToken } = req.body;
 
-  // Validate captcha
-  // await verifyTurnstile(turnstileToken);
+  await verifyTurnstile(turnstileToken);
 
   const existing = await prisma.user.findUnique({ where: { email } });
 
@@ -77,7 +90,7 @@ export const verifyEmail = asyncHandler(async (req:any, res:any) => {
     return res.status(400).json({ message: "Invalid or expired OTP" });
   }
 
-  await prisma.user.update({
+  const user = await prisma.user.update({
     where: { id: userId },
     data: { isVerified: true },
   });
@@ -86,20 +99,8 @@ export const verifyEmail = asyncHandler(async (req:any, res:any) => {
     where: { userId },
   });
 
-  const accessToken = generateAccessToken(userId);
-  const refreshToken = generateRefreshToken(userId);
-
-  res.cookie("accessToken", accessToken, {
-    httpOnly: true,
-    sameSite: "strict",
-  });
-
-  res.cookie("refreshToken", refreshToken, {
-    httpOnly: true,
-    sameSite: "strict",
-  });
-
-  res.json({ message: "Email verified successfully" });
+  setAuthCookies(res, userId);
+  res.json({ message: "Email verified successfully", user: toPublicUser(user) });
 });
 
 // ======================================================================
@@ -139,7 +140,7 @@ export const resendOtp = asyncHandler(async (req: Request, res: Response) => {
 // ======================================================================
 export const login = asyncHandler(async (req: Request, res: Response) => {
   const { email, password, turnstileToken } = req.body;
-  //await verifyTurnstile(turnstileToken);
+  await verifyTurnstile(turnstileToken);
 
   const user = await prisma.user.findUnique({ where: { email } });
 
@@ -157,24 +158,8 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
 
   if (!match) return res.status(400).json({ message: "Invalid credentials" });
 
-  // Tokens
-  const accessToken = generateAccessToken(user.id);
-  const refreshToken = generateRefreshToken(user.id);
-
-  // Cookies
-  res.cookie("accessToken", accessToken, {
-    httpOnly: true,
-    sameSite: "strict",
-    secure: false,
-  });
-
-  res.cookie("refreshToken", refreshToken, {
-    httpOnly: true,
-    sameSite: "strict",
-    secure: false,
-  });
-
-  res.json({ message: "Login successful", user });
+  setAuthCookies(res, user.id);
+  res.json({ message: "Login successful", user: toPublicUser(user) });
 });
 
 // ======================================================================
@@ -221,22 +206,8 @@ if (!user) {
   });
 }
 
-  const accessToken = generateAccessToken(user.id);
-  const refreshToken = generateRefreshToken(user.id);
-
-  res.cookie("accessToken", accessToken, {
-    httpOnly: true,
-    sameSite: "strict",
-    secure: false,
-  });
-
-  res.cookie("refreshToken", refreshToken, {
-    httpOnly: true,
-    sameSite: "strict",
-    secure: false,
-  });
-
-  res.json({ user });
+  setAuthCookies(res, user.id);
+  res.json({ user: toPublicUser(user) });
 });
 
 // ======================================================================
@@ -250,16 +221,8 @@ export const refreshToken = asyncHandler(async (req: Request, res: Response) => 
 
   try {
     const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
-
-    const newAccessToken = generateAccessToken(decoded.userId);
-
-    res.cookie("accessToken", newAccessToken, {
-      httpOnly: true,
-      sameSite: "strict",
-      secure: false,
-    });
-
-    res.json({ accessToken: newAccessToken });
+    setAccessCookie(res, decoded.userId);
+    res.json({ message: "Token refreshed" });
   } catch {
     res.status(401).json({ message: "Invalid refresh token" });
   }

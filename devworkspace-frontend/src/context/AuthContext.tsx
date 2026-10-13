@@ -39,6 +39,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return res.data.user;
   };
 
+  const verifyEmail = async (userId: string, otp: string) => {
+    const res = await api.post("/auth/verify-email", { userId, otp });
+    setUser(res.data.user);
+  };
+
   const logout = async () => {
     await api.post("/auth/logout");
     setUser(null);
@@ -46,7 +51,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, login, logout, signup, googleLogin }}
+      value={{ user, loading, login, logout, signup, googleLogin, verifyEmail }}
     >
       {children}
     </AuthContext.Provider>

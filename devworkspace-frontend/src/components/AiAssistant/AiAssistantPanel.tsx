@@ -88,11 +88,15 @@ function saveChat(msgs: Message[]) {
 async function sendMessage(messages: Message[], config: AIConfig, signal?: AbortSignal): Promise<string> {
   const { provider, apiKey, model } = config;
 
-  const convert = (msgs: Message[]) =>
-    msgs.filter(m => !m.error).map(m => ({ role: m.role, parts: [{ text: m.content }] }));
+  const history = messages.filter(m => !m.error);
 
   if (provider === 'gemini') {
-    const body = { contents: convert(messages) };
+    // Gemini names the assistant role "model".
+    const contents = history.map(m => ({
+      role: m.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: m.content }],
+    }));
+    const body = { contents };
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
     const res = await fetch(url, {
       method: 'POST',
@@ -118,7 +122,7 @@ async function sendMessage(messages: Message[], config: AIConfig, signal?: Abort
       model,
       messages: [
         { role: 'system', content: sysContent },
-        ...messages.map(m => ({ role: m.role, content: m.content })),
+        ...history.map(m => ({ role: m.role, content: m.content })),
       ],
       temperature: 0.7,
       max_tokens: 4096,
@@ -148,6 +152,9 @@ async function sendMessage(messages: Message[], config: AIConfig, signal?: Abort
 // ---------------------------------------------------------------------------
 // Simple markdown renderer
 // ---------------------------------------------------------------------------
+const escapeHtml = (s: string) =>
+  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
 function renderContent(text: string) {
   const lines = text.split('\n');
   const nodes: React.ReactNode[] = [];
@@ -202,8 +209,8 @@ function renderContent(text: string) {
       continue;
     }
 
-    // Bold
-    const rendered = line
+    // Escape first so model output can never inject HTML; only our own tags are added below.
+    const rendered = escapeHtml(line)
       .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
       .replace(/`(.+?)`/g, '<code style="background:#2c2c2e;padding:1px 5px;border-radius:3px;font-size:11px;color:#5b6af0">$1</code>');
 
