@@ -13,13 +13,26 @@ import DashboardHome from "../Dashboard/DashboardHome";
 import FigmaPanel from "../Figma/FigmaPanel";
 import AiAssistantPanel from "../AiAssistant/AiAssistantPanel";
 import { notionApi } from "../../api/api";
+import { API_ORIGIN, API_URL } from "../../config";
 
 interface AppShellProps {
   user?: { name?: string; email?: string } | null;
 }
 
+// Panels with expensive local state (open tabs, terminal session, drawings) stay
+// mounted after first open and are only hidden when you switch away.
+const KEEP_ALIVE: ToolId[] = ["editor", "figma"];
+
+const keepAliveStyle = (visible: boolean): React.CSSProperties => ({
+  flex: 1,
+  minHeight: 0,
+  flexDirection: "column",
+  display: visible ? "flex" : "none",
+});
+
 export default function AppShell({ user }: AppShellProps) {
   const [activePanel, setActivePanel] = useState<ToolId>("dashboard");
+  const [mountedPanels, setMountedPanels] = useState<ToolId[]>([]);
   const [connectedTools, setConnectedTools] = useState<ToolId[]>([]);
   const [notionPages, setNotionPages] = useState<{ id: string; title: string }[]>([]);
   const [selectedPage, setSelectedPage] = useState<{ id: string; title: string; blocks: { id: string; type: string; text: string }[] } | null>(null);
@@ -36,13 +49,20 @@ export default function AppShell({ user }: AppShellProps) {
     }).catch(() => {});
   }, []);
 
+  const openPanel = useCallback((id: ToolId) => {
+    setActivePanel(id);
+    if (KEEP_ALIVE.includes(id)) {
+      setMountedPanels((prev) => (prev.includes(id) ? prev : [...prev, id]));
+    }
+  }, []);
+
   const handleNotionConnect = useCallback(() => {
-    window.open("http://localhost:5000/auth/notion/connect", "notion-oauth", "width=600,height=700");
+    window.open(`${API_URL}/auth/notion/connect`, "notion-oauth", "width=600,height=700");
   }, []);
 
   useEffect(() => {
     const handler = (event: MessageEvent) => {
-      if (event.origin !== "http://localhost:5000") return;
+      if (event.origin !== API_ORIGIN) return;
       if (event.data?.success) {
         setConnectedTools((prev) => (prev.includes("notion") ? prev : [...prev, "notion"]));
         notionApi.getPages().then((res) => setNotionPages(res.pages)).catch(() => {});
@@ -79,7 +99,9 @@ export default function AppShell({ user }: AppShellProps) {
       setConnectedTools((prev) => prev.filter((t) => t !== "notion"));
       setNotionPages([]);
       setSelectedPage(null);
-    } catch {}
+    } catch (err) {
+      console.error("Notion disconnect failed:", err);
+    }
   }, []);
 
   useEffect(() => {
@@ -91,7 +113,7 @@ export default function AppShell({ user }: AppShellProps) {
   const renderPanel = () => {
     switch (activePanel) {
       case "dashboard":
-        return <DashboardHome onOpenTool={setActivePanel} connectedTools={connectedTools} user={user} />;
+        return <DashboardHome onOpenTool={openPanel} connectedTools={connectedTools} user={user} />;
       case "notion":
         return (
           <NotionPanel
@@ -105,16 +127,8 @@ export default function AppShell({ user }: AppShellProps) {
             pageLoading={pageLoading}
           />
         );
-      case "editor":
-        return (
-          <EditorErrorBoundary>
-            <EditorPanel />
-          </EditorErrorBoundary>
-        );
       case "github":
         return <PlaceholderPanel icon={<Github size={24} />} title="GitHub" subtitle="github_webview.connect()" color="#8b949e" />;
-      case "figma":
-        return <FigmaPanel />;
       case "ai":
         return <AiAssistantPanel />;
       case "terminal":
@@ -135,10 +149,22 @@ export default function AppShell({ user }: AppShellProps) {
       fontFamily: "Inter, -apple-system, sans-serif",
       overflow: "hidden",
     }}>
-      <TopBar user={user} onOpenTool={setActivePanel} />
+      <TopBar user={user} onOpenTool={openPanel} />
       <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
-        <Sidebar activePanel={activePanel} onSelect={setActivePanel} connectedTools={connectedTools} />
+        <Sidebar activePanel={activePanel} onSelect={openPanel} connectedTools={connectedTools} />
         <main style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+          {mountedPanels.includes("editor") && (
+            <div style={keepAliveStyle(activePanel === "editor")}>
+              <EditorErrorBoundary>
+                <EditorPanel />
+              </EditorErrorBoundary>
+            </div>
+          )}
+          {mountedPanels.includes("figma") && (
+            <div style={keepAliveStyle(activePanel === "figma")}>
+              <FigmaPanel />
+            </div>
+          )}
           {renderPanel()}
           <BottomAIBar />
         </main>

@@ -1,9 +1,7 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "../api/api";
-import type { User } from "../types/user";
-import type { AuthContextType } from "../types/auth";
-
-const AuthContext = createContext<AuthContextType | null>(null);
+import type { User } from "../types/auth";
+import { AuthContext } from "./useAuth";
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -36,7 +34,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const googleLogin = async (credential: string) => {
     const res = await api.post("/auth/google", { credential });
     setUser(res.data.user);
-    return res.data.user;
+  };
+
+  const verifyEmail = async (userId: string, otp: string) => {
+    const res = await api.post("/auth/verify-email", { userId, otp });
+    setUser(res.data.user);
   };
 
   const logout = async () => {
@@ -46,17 +48,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, login, logout, signup, googleLogin }}
+      value={{ user, loading, login, logout, signup, googleLogin, verifyEmail }}
     >
       {children}
     </AuthContext.Provider>
   );
-};
-
-export const useAuth = () => {
-  const ctx = useContext(AuthContext);
-  if (!ctx) {
-    throw new Error("useAuth must be used within AuthProvider");
-  }
-  return ctx;
 };

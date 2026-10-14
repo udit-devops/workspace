@@ -3,11 +3,14 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Mail, Check, ArrowRight, RefreshCw } from "lucide-react";
 import logo from "../assets/logo.png";
 import { api } from "../api/api";
+import { getErrorMessage } from "../api/errors";
+import { useAuth } from "../context/useAuth";
 
 export default function VerifyEmailPage() {
     const [params] = useSearchParams();
     const userId = params.get("userId");
     const navigate = useNavigate();
+    const { verifyEmail } = useAuth();
 
     const [otp, setOtp] = useState<string[]>(Array(6).fill(""));
     const inputsRef = useRef<Array<HTMLInputElement | null>>([]);
@@ -78,15 +81,12 @@ export default function VerifyEmailPage() {
 
         try {
             setLoading(true);
-            await api.post("/auth/verify-email", {
-                userId,
-                otp: code,
-            });
+            await verifyEmail(userId ?? "", code);
 
             setSuccess("Email verified successfully! 🎉");
             setTimeout(() => navigate("/dashboard"), 1500);
-        } catch (err: any) {
-            setError(err.response?.data?.message || "Invalid or expired code. Please try again.");
+        } catch (err) {
+            setError(getErrorMessage(err, "Invalid or expired code. Please try again."));
             setOtp(Array(6).fill(""));
             inputsRef.current[0]?.focus();
         } finally {

@@ -5,6 +5,7 @@ import {
   List, CheckSquare,
 } from "lucide-react";
 import { notionApi } from "../../api/api";
+import { getErrorMessage } from "../../api/errors";
 
 interface Block {
   id: string;
@@ -186,39 +187,47 @@ export default function NotionPanel({
   selectedPage, onSelectPage, pageLoading = false,
 }: NotionPanelProps) {
   const [addingBlock, setAddingBlock] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSaveBlock = useCallback(async (blockId: string, text: string, type: string) => {
+  // Runs a Notion write, then reloads; failures are shown instead of silently ignored.
+  const run = useCallback(async (action: () => Promise<unknown>, onDone: () => void) => {
+    setError(null);
     try {
-      await notionApi.updateBlock(blockId, text, type);
-      onSelectPage(selectedPage!.id);
-    } catch {}
+      await action();
+      onDone();
+    } catch (err) {
+      setError(getErrorMessage(err, "Notion request failed. Please try again."));
+    }
+  }, []);
+
+  const reloadPage = useCallback(() => {
+    if (selectedPage) onSelectPage(selectedPage.id);
   }, [selectedPage, onSelectPage]);
 
-  const handleDeleteBlock = useCallback(async (blockId: string) => {
-    try {
-      await notionApi.deleteBlock(blockId);
-      onSelectPage(selectedPage!.id);
-    } catch {}
-  }, [selectedPage, onSelectPage]);
+  const handleSaveBlock = useCallback(
+    (blockId: string, text: string, type: string) =>
+      run(() => notionApi.updateBlock(blockId, text, type), reloadPage),
+    [run, reloadPage]
+  );
 
-  const handleAddBelow = useCallback(async (_afterId: string) => {
+  const handleDeleteBlock = useCallback(
+    (blockId: string) => run(() => notionApi.deleteBlock(blockId), reloadPage),
+    [run, reloadPage]
+  );
+
+  /** Inserts an empty paragraph after `afterId`, or at the end of the page when omitted. */
+  const handleAddBelow = useCallback(async (afterId?: string) => {
     if (!selectedPage) return;
     setAddingBlock(true);
-    try {
-      await notionApi.addBlocks(selectedPage.id, [{ type: "paragraph", text: "" }]);
-      onSelectPage(selectedPage.id);
-    } catch {}
+    await run(() => notionApi.addBlocks(selectedPage.id, [{ type: "paragraph", text: "" }], afterId), reloadPage);
     setAddingBlock(false);
-  }, [selectedPage, onSelectPage]);
+  }, [selectedPage, run, reloadPage]);
 
   const handleNewPage = useCallback(async () => {
     const title = prompt("New page title:");
     if (!title || !selectedPage) return;
-    try {
-      await notionApi.createPage(selectedPage.id, title);
-      onRefresh();
-    } catch {}
-  }, [selectedPage, onRefresh]);
+    await run(() => notionApi.createPage(selectedPage.id, title), onRefresh);
+  }, [selectedPage, run, onRefresh]);
 
   if (!isConnected) {
     return (
@@ -328,6 +337,15 @@ export default function NotionPanel({
         <div style={{
           flex: 1, overflowY: "auto", padding: selectedPage ? "24px 32px" : 0,
         }}>
+          {error && (
+            <div style={{
+              maxWidth: 700, margin: "0 auto 16px", padding: "8px 12px", borderRadius: 8,
+              background: "rgba(255,69,58,0.1)", border: "0.5px solid rgba(255,69,58,0.3)",
+              color: "#ff453a", fontSize: 12,
+            }}>
+              {error}
+            </div>
+          )}
           {pageLoading ? (
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 48, color: "#636366", fontSize: 12, justifyContent: "center" }}>
               <Loader size={14} />
@@ -354,7 +372,7 @@ export default function NotionPanel({
                 ))
               )}
               <button
-                onClick={() => handleAddBelow(selectedPage.blocks[selectedPage.blocks.length - 1]?.id || "_end")}
+                onClick={() => handleAddBelow()}
                 disabled={addingBlock}
                 style={{
                   display: "flex", alignItems: "center", gap: 6,

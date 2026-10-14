@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ArrowUp, Sparkles } from "lucide-react";
+import { api } from "../../api/api";
 
 export default function BottomAIBar() {
   const [value, setValue] = useState("");
@@ -12,17 +13,8 @@ export default function BottomAIBar() {
     setResponse(null);
 
     try {
-      const res = await fetch("http://localhost:5000/ai/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: value.trim() }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setResponse(data.reply || "No response");
-      } else {
-        setResponse("AI service unavailable. Your message was noted.");
-      }
+      const res = await api.post("/ai/chat", { message: value.trim() });
+      setResponse(res.data.reply || "No response");
     } catch {
       setResponse("AI service unavailable. Your message was noted.");
     } finally {

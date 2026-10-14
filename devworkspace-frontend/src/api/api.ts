@@ -1,8 +1,36 @@
-import axios from "axios";
+import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
+import { API_URL } from "../config";
 
 export const api = axios.create({
-  baseURL: "http://localhost:5000",
+  baseURL: API_URL,
   withCredentials: true,
+});
+
+// On 401, refresh the access token once and retry. Concurrent 401s share one refresh call.
+let refreshing: Promise<unknown> | null = null;
+
+api.interceptors.response.use(undefined, async (error: AxiosError) => {
+  const original = error.config as (InternalAxiosRequestConfig & { _retried?: boolean }) | undefined;
+  if (
+    error.response?.status !== 401 ||
+    !original ||
+    original._retried ||
+    original.url === "/auth/refresh"
+  ) {
+    throw error;
+  }
+
+  original._retried = true;
+  refreshing ??= api.get("/auth/refresh").finally(() => {
+    refreshing = null;
+  });
+
+  try {
+    await refreshing;
+  } catch {
+    throw error;
+  }
+  return api(original);
 });
 
 export const notionApi = {
@@ -22,8 +50,8 @@ export const notionApi = {
     const res = await api.patch(`/auth/notion/blocks/${blockId}`, { text, type });
     return res.data;
   },
-  async addBlocks(pageId: string, blocks: { type: string; text: string }[]) {
-    const res = await api.post(`/auth/notion/pages/${pageId}/blocks`, { blocks });
+  async addBlocks(pageId: string, blocks: { type: string; text: string }[], after?: string) {
+    const res = await api.post(`/auth/notion/pages/${pageId}/blocks`, { blocks, after });
     return res.data;
   },
   async deleteBlock(blockId: string) {

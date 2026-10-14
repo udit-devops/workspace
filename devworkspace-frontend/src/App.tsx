@@ -1,11 +1,10 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-import { useAuth } from "./context/AuthContext";
+import { useAuth } from "./context/useAuth";
 import AuthPage from "./pages/AuthPage";
 import Dashboard from "./pages/DashboardPage";
 import type { JSX } from "react";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
 import LandingPage from "./pages/LandingPage";
-import './App.css'
 function PrivateRoute({ children }: { children: JSX.Element }) {
   const { user, loading } = useAuth();
 

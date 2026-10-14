@@ -415,19 +415,11 @@ export default function FileTree({
   const [creating, setCreating] = useState<CreatingState | null>(null);
   const [menu, setMenu] = useState<MenuState | null>(null);
 
-  useEffect(() => {
-    setExpanded((prev) => {
-      const next = new Set(prev);
-      next.add(root.path);
-      return next;
-    });
-  }, [root.path]);
-
-  useEffect(() => {
-    if (creating) {
-      setExpanded((prev) => new Set(prev).add(creating.parentPath));
-    }
-  }, [creating]);
+  // Opening the create input also expands its parent folder so the input is visible.
+  const startCreating = (state: CreatingState) => {
+    setCreating(state);
+    setExpanded((prev) => new Set(prev).add(state.parentPath));
+  };
 
   const handleToggle = (path: string) => {
     setExpanded((prev) => {
@@ -484,10 +476,10 @@ export default function FileTree({
         />
         <span>EXPLORER</span>
         <div style={{ flex: 1 }} />
-        <IconButton title="New file" onClick={() => setCreating({ parentPath: root.path, kind: "file" })}>
+        <IconButton title="New file" onClick={() => startCreating({ parentPath: root.path, kind: "file" })}>
           <FilePlus size={13} />
         </IconButton>
-        <IconButton title="New folder" onClick={() => setCreating({ parentPath: root.path, kind: "directory" })}>
+        <IconButton title="New folder" onClick={() => startCreating({ parentPath: root.path, kind: "directory" })}>
           <FolderPlus size={13} />
         </IconButton>
         <IconButton title="Refresh" onClick={onRefresh}>
@@ -525,7 +517,7 @@ creating={creating}
         <ContextMenu
           menu={menu}
           onClose={() => setMenu(null)}
-          onCreate={(kind) => setCreating({ parentPath: menu.path, kind })}
+          onCreate={(kind) => startCreating({ parentPath: menu.path, kind })}
           onDelete={(path) => {
             setMenu(null);
             onDelete(path);

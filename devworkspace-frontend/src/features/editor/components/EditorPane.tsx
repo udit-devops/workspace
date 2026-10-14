@@ -162,9 +162,9 @@ export default function EditorPane({
             onChange={(value) => {
               const p = activeTab.path;
               const next = value ?? "";
+              if (next !== pane.originals[p]) onContentEdited(p);
               onUpdate((prev) => {
                 const dirty = next !== prev.originals[p];
-                if (dirty) onContentEdited(p);
                 return {
                   ...prev,
                   contents: { ...prev.contents, [p]: next },

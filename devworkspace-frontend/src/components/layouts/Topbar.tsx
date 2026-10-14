@@ -91,10 +91,6 @@ export default function TopBar({ user, onOpenTool }: TopBarProps) {
   }, [open, openPalette]);
 
   useEffect(() => {
-    setSelectedIndex(0);
-  }, [query]);
-
-  useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
@@ -161,7 +157,7 @@ export default function TopBar({ user, onOpenTool }: TopBarProps) {
                 ref={inputRef}
                 type="text"
                 value={query}
-                onChange={e => setQuery(e.target.value)}
+                onChange={e => { setQuery(e.target.value); setSelectedIndex(0); }}
                 onKeyDown={handleKeyDown}
                 placeholder="Search tools, bundles, files..."
                 style={{
