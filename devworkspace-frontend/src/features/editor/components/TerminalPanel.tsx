@@ -3,10 +3,29 @@ import { Terminal } from "xterm";
 import { FitAddon } from "xterm-addon-fit";
 import "xterm/css/xterm.css";
 
-export default function TerminalPanel() {
+interface TerminalPanelProps {
+  /** Folder the shell starts in (validated against WORKSPACE_ROOT server-side). */
+  cwd?: string | null;
+  /** A command to type into the shell; a new id runs it again. */
+  command?: { id: number; text: string } | null;
+}
+
+export default function TerminalPanel({ cwd, command }: TerminalPanelProps) {
   const terminalRef = useRef<HTMLDivElement>(null);
   const termInstance = useRef<Terminal | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
+  // Commands requested before the socket opens are sent once it connects.
+  const pendingCommand = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!command) return;
+    const ws = wsRef.current;
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(command.text + "\r");
+    } else {
+      pendingCommand.current = command.text;
+    }
+  }, [command]);
 
   useEffect(() => {
     if (!terminalRef.current) return;
@@ -32,17 +51,24 @@ export default function TerminalPanel() {
       const timer = setTimeout(() => {
         try {
           fitAddon.fit();
-        } catch {}
+        } catch {
+          // Container not laid out yet; the ResizeObserver fits it later.
+        }
       }, 50);
 
       termInstance.current = term;
 
-      const ws = new WebSocket("ws://localhost:5000/ws/terminal");
+      const query = cwd ? `?cwd=${encodeURIComponent(cwd)}` : "";
+      const ws = new WebSocket(`ws://localhost:5000/ws/terminal${query}`);
       wsRef.current = ws;
 
       ws.onopen = () => {
         term.writeln("\x1b[32m[Devspace Terminal Connected]\x1b[0m\r\n");
         setTimeout(() => fitAddon.fit(), 50);
+        if (pendingCommand.current) {
+          ws.send(pendingCommand.current + "\r");
+          pendingCommand.current = null;
+        }
       };
 
       ws.onmessage = (event) => {
@@ -99,7 +125,7 @@ export default function TerminalPanel() {
     } catch (error) {
       console.error("Failed to initialize terminal:", error);
     }
-  }, []);
+  }, [cwd]);
 
   return (
     <div

@@ -24,6 +24,9 @@ import FileTree from "./FileTree";
 import ActionBar from "./ActionBar";
 import WorkspaceView from "./WorkspaceView";
 import TerminalPanel from "./TerminalPanel";
+import PreviewPanel from "./PreviewPanel";
+import { previewApi } from "../../../api/api";
+import { npmRunCommand, pickNpmScript, pickRunTarget } from "../utils/runTarget";
 
 type TreeState = "idle" | "loading" | "ready" | "error";
 
@@ -37,6 +40,16 @@ export default function EditorPanel() {
   const [liveServerOn, setLiveServerOn] = useState(false);
   const [showTerminal, setShowTerminal] = useState(false);
   const [output, setOutput] = useState<{ type: WorkspaceAction; message: string } | null>(null);
+
+  // Run / Live: static sites open in the preview pane, Node projects in the terminal.
+  const [preview, setPreview] = useState<{ baseUrl: string; entry: string } | null>(null);
+  const [previewVersion, setPreviewVersion] = useState(0);
+  const [running, setRunning] = useState(false);
+  const [terminalCommand, setTerminalCommand] = useState<{ id: number; text: string } | null>(null);
+  const liveRef = useRef(false);
+  useEffect(() => {
+    liveRef.current = liveServerOn;
+  }, [liveServerOn]);
 
   // Backend / workspace state
   const [workspace, setWorkspace] = useState<string | null>(() =>
@@ -122,6 +135,7 @@ export default function EditorPanel() {
       if (!trimmed) return;
       workspaceStore.setWorkspace(trimmed);
       setWorkspace(trimmed);
+      setPreview(null);
       resetWorkspaceState();
       await loadTree(trimmed);
     },
@@ -266,16 +280,18 @@ export default function EditorPanel() {
   );
 
   const persistFile = useCallback(
-    async (paneId: string, filePath: string) => {
-      if (!workspace) return;
+    async (paneId: string, filePath: string): Promise<boolean> => {
+      if (!workspace) return false;
       const key = `${paneId}::${filePath}`;
-      if (inFlight.current.has(key)) return;
+      if (inFlight.current.has(key)) return false;
       const content = panes[paneId]?.contents[filePath];
-      if (content === undefined) return;
+      if (content === undefined) return false;
 
       inFlight.current.add(key);
       try {
         await fsAdapter.writeFile(workspace, filePath, content);
+        // Live mode: reload the preview after every successful save.
+        if (liveRef.current) setPreviewVersion((v) => v + 1);
         setPanes((prev) => {
           const pane = prev[paneId];
           if (!pane) return prev;
@@ -290,10 +306,12 @@ export default function EditorPanel() {
             },
           };
         });
+        return true;
       } catch (err) {
         flash(
           `Save failed (${filePath.split("/").pop()}): ${err instanceof Error ? err.message : "error"}`
         );
+        return false;
       } finally {
         inFlight.current.delete(key);
       }
@@ -441,30 +459,73 @@ export default function EditorPanel() {
     setThemeMode((prev) => (prev === "dark" ? "light" : "dark"));
   };
 
-  const handleRun = () => {
-    setOutput((prev) =>
-      prev?.type === "run" && prev.message.startsWith("[devworkspace] run")
-        ? null
-        : {
-            type: "run",
-            message:
-              "[devworkspace] run target not configured yet.\n→ Phase 9 adds real terminal execution.\nCurrent pane: " +
-              (activePaneId ?? "none"),
-          }
-    );
-  };
+  /** Saves every dirty tab now (pending autosaves included) so Run sees the latest code. */
+  const flushAllSaves = useCallback(async () => {
+    const jobs: Promise<boolean>[] = [];
+    for (const pane of Object.values(panes)) {
+      for (const tab of pane.tabs) {
+        if (!tab.isDirty) continue;
+        const key = `${pane.id}::${tab.path}`;
+        if (inFlight.current.has(key)) continue; // already being written
+        const timer = autosaveTimers.current.get(key);
+        if (timer) {
+          clearTimeout(timer);
+          autosaveTimers.current.delete(key);
+        }
+        jobs.push(persistFile(pane.id, tab.path));
+      }
+    }
+    const results = await Promise.all(jobs);
+    return results.every(Boolean);
+  }, [panes, persistFile]);
+
+  const handleRun = useCallback(async () => {
+    if (!workspace || !root || running) return;
+    setRunning(true);
+    try {
+      if (!(await flushAllSaves())) return; // the save error is already shown
+
+      const activePath = activePaneId ? panes[activePaneId]?.activePath ?? null : null;
+      const target = pickRunTarget(root, activePath);
+
+      if (target.kind === "static") {
+        const session = await previewApi.createSession(workspace);
+        setPreview({ baseUrl: session.baseUrl, entry: target.entry });
+        setPreviewVersion((v) => v + 1);
+        setOutput(null);
+        return;
+      }
+
+      if (target.kind === "node") {
+        const pkg = await fsAdapter.readFile(workspace, target.packageJsonPath);
+        const script = pickNpmScript(pkg.content);
+        if (!script) {
+          flash('[run] package.json has no "dev" or "start" script to run.');
+          return;
+        }
+        setShowTerminal(true);
+        setTerminalCommand({ id: Date.now(), text: npmRunCommand(script) });
+        return;
+      }
+
+      flash("[run] Nothing to run here. Add an index.html, or a package.json with a \"dev\" or \"start\" script.");
+    } catch (err) {
+      flash(`[run] Failed: ${err instanceof Error ? err.message : "error"}`);
+    } finally {
+      setRunning(false);
+    }
+  }, [workspace, root, running, flushAllSaves, activePaneId, panes, flash]);
 
   const handleToggleLiveServer = () => {
-    setLiveServerOn((prev) => {
-      const next = !prev;
-      setOutput({
-        type: "live_server",
-        message: next
-          ? `[live-server] • started watching ${workspace ?? "—"}\n[devworkspace] real hot-reload wiring lands in a later phase.`
-          : "[live-server] ▪ stopped",
-      });
-      return next;
+    const next = !liveServerOn;
+    setLiveServerOn(next);
+    setOutput({
+      type: "live_server",
+      message: next
+        ? "[live] on: the preview reloads every time a file is saved."
+        : "[live] off",
     });
+    if (next && !preview) void handleRun();
   };
 
   const handleSplit = (direction: SplitDirection) => {
@@ -545,6 +606,7 @@ export default function EditorPanel() {
           activePaneId={activePaneId}
           hasSplits={hasSplits}
           onRun={handleRun}
+          running={running}
           onToggleLiveServer={handleToggleLiveServer}
           liveServerOn={liveServerOn}
           onSplit={handleSplit}
@@ -566,6 +628,15 @@ export default function EditorPanel() {
             onContentEdited={scheduleAutosave}
             onSaveRequest={handleSaveRequest}
           />
+          {preview && (
+            <PreviewPanel
+              baseUrl={preview.baseUrl}
+              entry={preview.entry}
+              version={previewVersion}
+              live={liveServerOn}
+              onClose={() => setPreview(null)}
+            />
+          )}
         </div>
 
         {output && !showTerminal && (
@@ -636,7 +707,7 @@ export default function EditorPanel() {
               </button>
             </div>
             <div style={{ flex: 1, minHeight: 0 }}>
-              <TerminalPanel />
+              <TerminalPanel cwd={workspace} command={terminalCommand} />
             </div>
           </div>
         )}

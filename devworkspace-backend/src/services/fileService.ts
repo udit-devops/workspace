@@ -154,7 +154,7 @@ export class FileService {
     content: string
   ): Promise<ReadResult> {
     const { target } = await resolveInWorkspace(workspacePath, filePath);
-    if (content.length > MAX_FILE_SIZE) {
+    if (Buffer.byteLength(content, "utf8") > MAX_FILE_SIZE) {
       throw new PathGuardError(
         `Write exceeds the ${(MAX_FILE_SIZE / 1024 / 1024).toFixed(0)} MB limit`,
         413

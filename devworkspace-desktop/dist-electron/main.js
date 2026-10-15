@@ -76,6 +76,17 @@ function createWindow() {
         if (/^https?:\/\/([^.]+\.)*google\.com/i.test(url)) {
             return { action: 'allow' };
         }
+        // Project previews run untrusted code from cloned repos: never give them
+        // an Electron window (child windows inherit the preload bridge).
+        if (url.startsWith(config_1.BACKEND_ORIGIN + "/preview/")) {
+            void electron_1.shell.openExternal(url);
+            return { action: 'deny' };
+        }
+        // GitHub / Notion sign-in popups start on the backend and must stay
+        // in-app so they can postMessage the result back to this window.
+        if (url.startsWith(config_1.BACKEND_ORIGIN + "/")) {
+            return { action: 'allow' };
+        }
         if (/^https?:/i.test(url))
             void electron_1.shell.openExternal(url);
         return { action: 'deny' };

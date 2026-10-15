@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Code2, Github } from "lucide-react";
+import { Code2 } from "lucide-react";
 import TopBar from "./Topbar";
 
 import BottomAIBar from "./BottomAIBar";
@@ -7,12 +7,13 @@ import type { ToolId } from "./Sidebar";
 import Sidebar from "./Sidebar";
 import PlaceholderPanel from "../Panels/PlaceHolderpanel";
 import NotionPanel from "../Panels/NotionPanel";
+import GitHubPanel from "../Panels/GitHubPanel";
 import EditorPanel from "../../features/editor/components/EditorPanel";
 import EditorErrorBoundary from "../../features/editor/components/EditorErrorBoundary";
 import DashboardHome from "../Dashboard/DashboardHome";
 import FigmaPanel from "../Figma/FigmaPanel";
 import AiAssistantPanel from "../AiAssistant/AiAssistantPanel";
-import { notionApi } from "../../api/api";
+import { notionApi, githubApi } from "../../api/api";
 
 interface AppShellProps {
   user?: { name?: string; email?: string } | null;
@@ -42,7 +43,7 @@ export default function AppShell({ user }: AppShellProps) {
 
   useEffect(() => {
     const handler = (event: MessageEvent) => {
-      if (event.origin !== "http://localhost:5000") return;
+      if (event.origin !== "http://localhost:5000" || event.data?.provider === "github") return;
       if (event.data?.success) {
         setConnectedTools((prev) => (prev.includes("notion") ? prev : [...prev, "notion"]));
         notionApi.getPages().then((res) => setNotionPages(res.pages)).catch(() => {});
@@ -72,6 +73,18 @@ export default function AppShell({ user }: AppShellProps) {
       setPageLoading(false);
     }
   }, []);
+
+  const setGitHubConnected = useCallback((connected: boolean) => {
+    setConnectedTools((prev) => {
+      const has = prev.includes("github");
+      if (connected === has) return prev;
+      return connected ? [...prev, "github"] : prev.filter((t) => t !== "github");
+    });
+  }, []);
+
+  useEffect(() => {
+    githubApi.getStatus().then((s) => setGitHubConnected(s.connected)).catch(() => {});
+  }, [setGitHubConnected]);
 
   const handleNotionDisconnect = useCallback(async () => {
     try {
@@ -112,7 +125,12 @@ export default function AppShell({ user }: AppShellProps) {
           </EditorErrorBoundary>
         );
       case "github":
-        return <PlaceholderPanel icon={<Github size={24} />} title="GitHub" subtitle="github_webview.connect()" color="#8b949e" />;
+        return (
+          <GitHubPanel
+            onOpenEditor={() => setActivePanel("editor")}
+            onConnectionChange={setGitHubConnected}
+          />
+        );
       case "figma":
         return <FigmaPanel />;
       case "ai":

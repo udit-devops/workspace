@@ -16,6 +16,7 @@ interface ActionBarProps {
   activePaneId: string | null;
   hasSplits: boolean;
   onRun: () => void;
+  running?: boolean;
   onToggleLiveServer: () => void;
   liveServerOn: boolean;
   onSplit: (direction: SplitDirection) => void;
@@ -101,6 +102,7 @@ export default function ActionBar({
   activePaneId,
   hasSplits,
   onRun,
+  running = false,
   onToggleLiveServer,
   liveServerOn,
   onSplit,
@@ -143,9 +145,14 @@ export default function ActionBar({
         Refresh
       </ToolButton>
 
-      <ToolButton onClick={onRun} color={lab.green} title="Run project">
+      <ToolButton
+        onClick={onRun}
+        active={running}
+        color={lab.green}
+        title="Run: preview HTML, or run the package.json dev/start script"
+      >
         <Play size={12} />
-        Run
+        {running ? "Running…" : "Run"}
       </ToolButton>
 
       <ToolButton
